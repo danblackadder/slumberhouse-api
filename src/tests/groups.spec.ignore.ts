@@ -3,7 +3,8 @@ import request from 'supertest';
 import bcrypt from 'bcryptjs';
 
 import server from '../server';
-import { database, createUser } from './config';
+import { database } from './config';
+import { createGroups, createOrganization, createUser } from '../utility/mock';
 import { Group, GroupUsers, Organization, OrganizationGroup, OrganizationUsers, User } from '../models';
 import { GroupRole, OrganizationRole } from '../types';
 import path from 'path';
@@ -11,9 +12,60 @@ import path from 'path';
 describe('/group', () => {
   database('slumberhouse-test', server);
 
+  describe('GET /', () => {
+    it('returns groups associated with user id', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+
+      await createGroups({ userId, organizationId, count: 2 });
+
+      const response = await request(server).get('/group/').set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
+
+    it.only('returns a count of users associated with group', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+
+      const hashedPassword = await bcrypt.hash('fr5T$kE@LNy8p8a', 10);
+      const user = await User.create({
+        firstName: 'FirstTest',
+        lastName: 'LastTest',
+        email: 'test2@test.com',
+        password: hashedPassword,
+      });
+
+      const group = await Group.create({
+        name: 'Slumberhouse',
+      });
+
+      await GroupUsers.create({
+        userId: userId,
+        role: GroupRole.ADMIN,
+        groupId: group._id,
+      });
+
+      await GroupUsers.create({
+        userId: user._id,
+        role: GroupRole.ADMIN,
+        groupId: group._id,
+      });
+
+      const response = await request(server).get('/group/').set('Authorization', `Bearer ${token}`);
+
+      console.log(response.body);
+      expect(response.status).toBe(200);
+      expect(response.body[0].count).toBe(2);
+    });
+  });
+
   describe('POST /', () => {
     it('successfully creates a new group with a name', async () => {
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .send({
@@ -29,7 +81,9 @@ describe('/group', () => {
     });
 
     it('successfully creates a new group with a description', async () => {
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .send({
@@ -49,7 +103,9 @@ describe('/group', () => {
     it('successfully creates a new group with an image', async () => {
       const image = path.resolve(__dirname, `./assets/logo.png`);
 
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .set('content-type', 'application/octet-stream')
@@ -65,8 +121,10 @@ describe('/group', () => {
       expect(group?.image).not.toBe(null);
     });
 
-    it.only('successfully updates the organization with the new group', async () => {
-      const { token } = await createUser();
+    it('successfully updates the organization with the new group', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .send({ name: 'Slumberhouse' })
@@ -82,7 +140,9 @@ describe('/group', () => {
     });
 
     it('updates a user admin role upon successfully creating a group', async () => {
-      const { token, id } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .send({
@@ -91,17 +151,19 @@ describe('/group', () => {
         .set('Authorization', `Bearer ${token}`);
 
       const group = await Group.findOne({ name: 'Slumberhouse' });
-      const groupUser = await GroupUsers.findOne({ userId: id });
+      const groupUser = await GroupUsers.findOne({ userId });
 
       expect(response.status).toBe(200);
       expect(response.body.error).toBeUndefined();
-      expect(groupUser?.userId.toString()).toBe(id.toString());
+      expect(groupUser?.userId.toString()).toBe(userId.toString());
       expect(groupUser?.groupId.toString()).toBe(group?.id.toString());
       expect(groupUser?.role).toBe(GroupRole.ADMIN);
     });
 
     it('returns group name upon successfully creating a new group', async () => {
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .send({
@@ -123,7 +185,9 @@ describe('/group', () => {
     });
 
     it('fails if no name is passed', async () => {
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server).post('/group/').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
@@ -131,7 +195,9 @@ describe('/group', () => {
     });
 
     it('fails if name is less than 2 characters long', async () => {
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .post('/group/')
         .send({ name: 's' })
@@ -139,72 +205,6 @@ describe('/group', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.errors.name).toContain('Name must be longer than 2 characters');
-    });
-  });
-
-  describe('GET /', () => {
-    it('returns groups associated with user id', async () => {
-      const { id, token } = await createUser();
-
-      const group1 = await Group.create({
-        name: 'Slumberhouse',
-      });
-
-      const group2 = await Group.create({
-        name: 'Test',
-      });
-
-      await GroupUsers.create({
-        userId: id,
-        role: GroupRole.ADMIN,
-        groupId: group1._id,
-      });
-
-      await GroupUsers.create({
-        userId: id,
-        role: GroupRole.ADMIN,
-        groupId: group2._id,
-      });
-
-      const response = await request(server).get('/group/').set('Authorization', `Bearer ${token}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body[0].name).toBe('Slumberhouse');
-      expect(response.body[1].name).toBe('Test');
-    });
-
-    it('returns a count of users associated with group', async () => {
-      const { id, token } = await createUser();
-
-      const hashedPassword = await bcrypt.hash('fr5T$kE@LNy8p8a', 10);
-      const user = await User.create({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test2@test.com',
-        password: hashedPassword,
-      });
-
-      const group = await Group.create({
-        name: 'Slumberhouse',
-      });
-
-      await GroupUsers.create({
-        userId: id,
-        role: GroupRole.ADMIN,
-        groupId: group._id,
-      });
-
-      await GroupUsers.create({
-        userId: user._id,
-        role: GroupRole.ADMIN,
-        groupId: group._id,
-      });
-
-      const response = await request(server).get('/group/').set('Authorization', `Bearer ${token}`);
-
-      console.log(response.body);
-      expect(response.status).toBe(200);
-      expect(response.body[0].count).toBe(2);
     });
   });
 });

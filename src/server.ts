@@ -6,8 +6,9 @@ import fileUpload from 'express-fileupload';
 import http from 'http';
 import path from 'path';
 
-import { Authentication, Group, Users } from './routes';
+import { Authentication, Group, Settings } from './routes';
 import { verifyToken } from './middleware';
+import { permissions } from './middleware/permissions.middleware';
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.use(bodyParser.json());
 
 app.use('/authentication', Authentication);
 app.use('/group', verifyToken, Group);
-app.use('/users', verifyToken, Users);
+app.use('/settings', [verifyToken, permissions.organizationAdmin], Settings);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 

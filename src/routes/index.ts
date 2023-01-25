@@ -1,5 +1,5 @@
 import Authentication from './authentication.router';
 import Group from './group.router';
-import Users from './users.router';
+import Settings from './settings';
 
-export { Authentication, Group, Users };
+export { Authentication, Group, Settings };

@@ -7,3 +7,8 @@ export enum UserStatus {
 export interface IUserPostErrors {
   email: string[];
 }
+
+export interface IUserPutErrors {
+  userId: string[];
+  role: string[];
+}

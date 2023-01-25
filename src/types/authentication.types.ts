@@ -6,3 +6,9 @@ export interface IRegistrationErrors {
   passwordConfirmation: string[];
   organization: string[];
 }
+
+export interface Token {
+  userId: string;
+  organizationId: string;
+  iat: number | undefined;
+}

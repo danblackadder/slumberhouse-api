@@ -4,8 +4,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import server from '../server';
-import { createUser, database } from './config';
+import { database } from './config';
 import { Organization, OrganizationUsers, User } from '../models';
+import { createOrganization, createUser } from '../utility/mock';
 
 describe('/authentication', () => {
   database('slumberhouse-test', server);
@@ -232,14 +233,13 @@ describe('/authentication', () => {
     });
 
     it('fails if email is not unique', async () => {
-      await User.create({
-        email: 'test@test.com',
-      });
+      const { id: organizationId } = await createOrganization();
+      const { email } = await createUser({ organizationId });
 
       const response = await request(server).post('/authentication/register').send({
         firstName: 'FirstTest',
         lastName: 'LastTest',
-        email: 'test@test.com',
+        email,
         password: 'fr5T$kE@LNy8p8a',
         passwordConfirmation: 'fr5T$kE@LNy8p8a',
         organization: 'Slumberhouse',
@@ -252,18 +252,12 @@ describe('/authentication', () => {
 
   describe('POST /login', () => {
     it('successfully logs in', async () => {
-      const hashedPassword = await bcrypt.hash('fr5T$kE@LNy8p8a', 10);
-      const user = await User.create({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: hashedPassword,
-      });
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string);
+      const { id: organizationId } = await createOrganization();
+      const { token, email, password } = await createUser({ organizationId });
 
       const response = await request(server).post('/authentication/login').send({
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
+        email,
+        password,
       });
 
       expect(response.status).toBe(200);
@@ -272,18 +266,12 @@ describe('/authentication', () => {
     });
 
     it('fails if password does not match', async () => {
-      const hashedPassword = await bcrypt.hash('fr5T$kE@LNy8p8a', 10);
-      await User.create({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: hashedPassword,
-        organization: 'Slumberhouse',
-      });
+      const { id: organizationId } = await createOrganization();
+      const { email } = await createUser({ organizationId });
 
       const response = await request(server).post('/authentication/login').send({
-        email: 'test@test.com',
-        password: 'wrongPassword',
+        email: email,
+        password: 'password',
       });
 
       expect(response.status).toBe(400);
@@ -303,7 +291,9 @@ describe('/authentication', () => {
 
   describe('GET /me', () => {
     it('returns users details when successfully aquired token', async () => {
-      const { token } = await createUser();
+      const { id: organizationId } = await createOrganization();
+      const { token } = await createUser({ organizationId });
+
       const response = await request(server)
         .get('/authentication/me')
         .set('Authorization', `Bearer ${token}`);

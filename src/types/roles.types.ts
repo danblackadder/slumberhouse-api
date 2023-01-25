@@ -9,9 +9,3 @@ export enum GroupRole {
   BASIC = 'basic',
   EXTERNAL = 'external',
 }
-
-export enum UserStatus {
-  INVITED = 'invited',
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-}

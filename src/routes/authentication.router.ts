@@ -62,7 +62,13 @@ router.post('/login', async (req: Request, res: Response) => {
     const user = await User.findOne({ email: email });
     if (user) {
       if (await bcrypt.compare(password, user.password as string)) {
-        res.status(200).send({ token: jwt.sign({ id: user.id }, process.env.JWT_SECRET as string) });
+        const organization = await OrganizationUsers.findOne({ userId: user._id });
+        res.status(200).send({
+          token: jwt.sign(
+            { userId: user._id, organizationId: organization?.organizationId },
+            process.env.JWT_SECRET as string
+          ),
+        });
       } else {
         res.status(400).send({ error: 'Username or password does not match' });
       }
@@ -79,7 +85,7 @@ router.post('/login', async (req: Request, res: Response) => {
 router.get('/me', verifyToken, async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    const id = new mongoose.Types.ObjectId(token.id);
+    const id = new mongoose.Types.ObjectId(token.userId);
 
     const user = await OrganizationUsers.aggregate([
       { $match: { userId: id } },
@@ -107,6 +113,7 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
           firstName: '$user.firstName',
           lastName: '$user.lastName',
           email: '$user.email',
+          role: '$role',
           organizationId: '$organization._id',
           organization: '$organization.name',
         },

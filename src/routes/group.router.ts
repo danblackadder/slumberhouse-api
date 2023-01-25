@@ -12,7 +12,7 @@ const router = express.Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    const id = new mongoose.Types.ObjectId(token.id);
+    const id = new mongoose.Types.ObjectId(token.userId);
 
     const groups = await GroupUsers.aggregate()
       .match({ userId: id })
@@ -66,12 +66,13 @@ router.post('/', async (req: Request, res: Response) => {
         image.mv(`${__dirname}/../../uploads/${filename}`);
       }
     }
+    var fullUrl = `${req.protocol}://${req.get('host')}/uploads`;
 
-    const organization = await OrganizationUsers.findOne({ userId: req.body.token.id });
-    const group = await Group.create({ name, description, image: filename });
+    const organization = await OrganizationUsers.findOne({ userId: req.body.token.userId });
+    const group = await Group.create({ name, description, image: `${fullUrl}/${filename}` });
     await GroupUsers.create({
       role: GroupRole.ADMIN,
-      userId: req.body.token.id,
+      userId: req.body.token.userId,
       groupId: group._id,
     });
     await OrganizationGroup.create({

@@ -1,9 +1,10 @@
 import validator from 'validator';
-import { User } from '../../models';
+import { OrganizationUsers, User } from '../../models';
 
-import { IUserPostErrors } from '../../types';
+import { IUserPostErrors, IUserPutErrors, OrganizationRole } from '../../types';
+import { Token } from '../../types/authentication.types';
 
-export const userValidation = async ({ email }: { email?: string }) => {
+export const userPostValidation = async ({ email }: { email?: string }) => {
   const errors = {
     email: [],
   } as IUserPostErrors;
@@ -25,5 +26,41 @@ export const userValidation = async ({ email }: { email?: string }) => {
   return {
     errors,
     email,
+  };
+};
+
+export const userPutValidation = async ({
+  userId,
+  role,
+  token,
+}: {
+  userId: string;
+  role?: OrganizationRole;
+  token: Token;
+}) => {
+  const errors = {
+    userId: [],
+    role: [],
+  } as IUserPutErrors;
+
+  if (!role) {
+    errors.role.push('Role must be supplied');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    errors.userId.push('User does not exist');
+  } else {
+    const requestUser = await OrganizationUsers.findOne({ userId: token.userId });
+    const updateUser = await OrganizationUsers.findOne({ userId });
+    if (requestUser?.role === OrganizationRole.ADMIN && updateUser?.role === OrganizationRole.OWNER) {
+      errors.userId.push('ADMIN can not modify role of OWNER');
+    }
+  }
+
+  return {
+    errors,
+    userId,
+    role,
   };
 };
