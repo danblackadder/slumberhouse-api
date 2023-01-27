@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-
 import { Server } from 'http';
 
 export const database = (databaseName: string, server: Server) => {

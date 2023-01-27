@@ -3,11 +3,8 @@ import mongoose from 'mongoose';
 
 import 'dotenv/config';
 
-import { GroupUsers, OrganizationUsers, User } from '../models';
+import { GroupUsers, OrganizationUsers } from '../models';
 import { GroupRole, OrganizationRole } from '../types/roles.types';
-import { getToken } from '../utility';
-
-import jwt from 'jsonwebtoken';
 
 const unauthorized = (res: Response) => {
   res.status(401).send({ error: 'Unauthorized request' });

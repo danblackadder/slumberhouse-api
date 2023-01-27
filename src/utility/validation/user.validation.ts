@@ -1,9 +1,9 @@
+import validator from 'validator';
+
 import { OrganizationUsers, User } from '../../models';
 import { Token } from '../../types/authentication.types';
 import { OrganizationRole } from '../../types/roles.types';
 import { IUserPostErrors, IUserPutErrors } from '../../types/user.types';
-
-import validator from 'validator';
 
 export const userPostValidation = async ({ email }: { email?: string }) => {
   const errors = {

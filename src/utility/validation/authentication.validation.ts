@@ -1,7 +1,7 @@
+import validator from 'validator';
+
 import { User } from '../../models';
 import { IRegistrationErrors } from '../../types/authentication.types';
-
-import validator from 'validator';
 
 export const authValidation = async ({
   firstName,

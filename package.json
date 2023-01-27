@@ -8,8 +8,8 @@
     "test": "jest --coverage --detectOpenHandles",
     "test:debug": "jest --detectOpenHandles -i groups.spec.ts --watch",
     "mock": "ts-node ./src/scripts/mock.ts",
-    "lint": "eslint src --ext .tsx --ext .ts && tsc",
-    "lint:fix": "eslint src --ext .tsx --ext .ts --fix && tsc"
+    "lint": "eslint src --ext .tsx --ext .ts && tsc && prettier src --check",
+    "lint:fix": "eslint src --ext .tsx --ext .ts --fix && tsc && prettier src --write"
   },
   "author": "",
   "license": "ISC",
@@ -20,15 +20,10 @@
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
     "dotenv": "^16.0.3",
-    "eslint": "^8.32.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.27.5",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^6.8.3",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.4",
     "uuid": "^9.0.0",
     "validator": "^13.7.0"
   },
@@ -51,13 +46,17 @@
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
     "babel-jest": "^29.3.1",
+    "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-simple-import-sort": "^9.0.0",
     "jest": "^29.3.1",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.3",
     "supertest": "^6.3.3",
-    "ts-jest": "^29.0.3"
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4"
   }
 }

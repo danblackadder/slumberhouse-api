@@ -1,16 +1,15 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import http from 'http';
+import path from 'path';
 
 import 'dotenv/config';
 
 import { permissions } from './middleware/permissions.middleware';
 import { verifyToken } from './middleware';
 import { Authentication, Group, Settings } from './routes';
-
-import bodyParser from 'body-parser';
-import cors from 'cors';
-import http from 'http';
-import path from 'path';
 
 const app = express();
 

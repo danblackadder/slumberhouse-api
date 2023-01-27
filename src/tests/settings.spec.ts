@@ -1,15 +1,15 @@
+import request from 'supertest';
+import { faker } from '@faker-js/faker';
+import path from 'path';
+
 import 'dotenv/config';
 
-import { Group, GroupUsers, OrganizationUsers, User } from '../models';
+import { Group, OrganizationUsers, User } from '../models';
 import server from '../server';
 import { GroupRole, OrganizationRole } from '../types/roles.types';
 import { createGroups, createOrganization, createUser, createUsers } from '../utility/mock';
 
 import { database } from './config';
-
-import { faker } from '@faker-js/faker';
-import path from 'path';
-import request from 'supertest';
 
 describe('/settings', () => {
   database('slumberhouse-test', server);

@@ -1,5 +1,4 @@
 module.exports = {
-  extends: 'airbnb-base',
   env: {
     browser: true,
     es6: true,
@@ -11,20 +10,13 @@ module.exports = {
     ecmaVersion: '2017',
     ecmaFeatures: {
       experimentalObjectRestSpread: true,
-      jsx: true,
     },
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint', 'import', 'prettier', 'simple-import-sort'],
   rules: {
-    'import/no-duplicates': 'error',
-    'import/no-unresolved': 'error',
-    'import/named': 'error',
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
-    'consistent-return': 'error',
-    'brace-style': ['error', 'stroustrup'],
-    'comma-dangle': ['error', 'never'],
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     'simple-import-sort/imports': [
       'error',
@@ -32,7 +24,7 @@ module.exports = {
         groups: [
           ['^(dotenv/config)'],
           // Packages `react` related packages come first.
-          ['^(express|mongoose)'],
+          ['^(express|mongoose|supertest)', '^@?\\w'],
           // Side effect imports.
           ['^\\u0000'],
           // Parent imports. Put `..` last.
@@ -45,5 +37,10 @@ module.exports = {
       },
     ],
     'simple-import-sort/exports': 'error',
+  },
+  settings: {
+    'import/resolver': {
+      typescript: {},
+    },
   },
 };

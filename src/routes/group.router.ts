@@ -39,12 +39,12 @@ router.get('/', async (req: Request, res: Response) => {
           role: '$role',
           users: { $size: '$users' },
         },
-      }
+      },
     ]);
 
     res.status(200).send(groups);
     return;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err);
     res.status(500).send({ errors: 'an unknown error occured' });
     return;
@@ -82,14 +82,13 @@ router.get('/:id/users', permissions.groupAdmin, async (req: Request, res: Respo
     ]);
 
     const totalDocuments = await GroupUsers.countDocuments({ groupId });
-    const total = await GroupUsers.find({ groupId });
 
     res.status(200).send({
       users: aggregate,
       pagination: { totalDocuments, totalPages: Math.ceil(totalDocuments / limit), currentPage, limit },
     });
     return;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err);
     res.status(500).send({ errors: 'an unknown error occured' });
     return;

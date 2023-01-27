@@ -1,3 +1,6 @@
+import request from 'supertest';
+import jwt from 'jsonwebtoken';
+
 import 'dotenv/config';
 
 import { Organization, OrganizationUsers, User } from '../models';
@@ -5,10 +8,6 @@ import server from '../server';
 import { createOrganization, createUser } from '../utility/mock';
 
 import { database } from './config';
-
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import request from 'supertest';
 
 describe('/authentication', () => {
   database('slumberhouse-test', server);

@@ -48,7 +48,7 @@ router.get('/', async (req: Request, res: Response) => {
       pagination: { totalDocuments, totalPages: Math.ceil(totalDocuments / limit), currentPage, limit },
     });
     return;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err);
     res.status(500).send({ errors: 'an unknown error occured' });
     return;
@@ -62,7 +62,7 @@ router.post('/', async (req: Request, res: Response) => {
       email: req.body.email,
     });
 
-    if (Object.values(errors).some((value: any) => value.length > 0)) {
+    if (Object.values(errors).some((value: string[]) => value.length > 0)) {
       res.status(400).send({ errors });
       return;
     }
@@ -77,7 +77,7 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
     res.status(200).send();
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log(err);
     res.status(500).send({ errors: 'an unknown error occured' });
     return;
@@ -93,7 +93,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       token,
     });
 
-    if (Object.values(errors).some((value: any) => value.length > 0)) {
+    if (Object.values(errors).some((value: string[]) => value.length > 0)) {
       res.status(400).send({ errors });
       return;
     }
@@ -105,8 +105,8 @@ router.put('/:id', async (req: Request, res: Response) => {
     await OrganizationUsers.findOneAndUpdate({ userId }, { role });
 
     res.status(200).send();
-  } catch (err: any) {
-    if (err.name === 'CastError') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'CastError') {
       res.status(400).send({ errors: 'User id must be a valid id' });
       return;
     }
@@ -125,8 +125,8 @@ router.delete('/:id', async (req: Request, res: Response) => {
     await User.findByIdAndDelete(userId);
 
     res.status(200).send();
-  } catch (err: any) {
-    if (err.name === 'CastError') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'CastError') {
       res.status(400).send({ errors: 'User id must be a valid id' });
       return;
     }

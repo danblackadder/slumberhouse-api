@@ -1,6 +1,7 @@
+import request from 'supertest';
+
 import 'dotenv/config';
 
-import { Group, GroupUsers, Organization, OrganizationGroup, OrganizationUsers, User } from '../models';
 import server from '../server';
 import { GroupRole, OrganizationRole } from '../types/roles.types';
 import {
@@ -9,14 +10,10 @@ import {
   createGroupUser,
   createOrganization,
   createUser,
-  createUsers
+  createUsers,
 } from '../utility/mock';
 
 import { database } from './config';
-
-import bcrypt from 'bcryptjs';
-import path from 'path';
-import request from 'supertest';
 
 describe('/group', () => {
   database('slumberhouse-test', server);

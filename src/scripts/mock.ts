@@ -1,10 +1,10 @@
+import { exit } from 'process';
+
 import '../database';
 
 import { OrganizationRole } from '../types/roles.types';
 import { UserStatus } from '../types/user.types';
 import { createGroups, createOrganization, createUser, createUsers } from '../utility/mock';
-
-import { exit } from 'process';
 
 try {
   (async () => {
@@ -43,6 +43,6 @@ try {
     console.log(`Password for all accounts: ${password}`);
     exit();
   })();
-} catch (err: any) {
+} catch (err: unknown) {
   console.log(err);
 }

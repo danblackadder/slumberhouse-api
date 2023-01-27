@@ -1,5 +1,8 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import validator from 'validator';
 
 import 'dotenv/config';
 
@@ -8,10 +11,6 @@ import { Organization, OrganizationUsers, User } from '../models';
 import { OrganizationRole } from '../types/roles.types';
 import { UserStatus } from '../types/user.types';
 import { authValidation } from '../utility/validation/authentication.validation';
-
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import validator from 'validator';
 
 const router = express.Router();
 
@@ -26,7 +25,7 @@ router.post('/register', async (req: Request, res: Response) => {
       organization: req.body.organization,
     });
 
-    if (Object.values(errors).some((value: any) => value.length > 0)) {
+    if (Object.values(errors).some((value: string[]) => value.length > 0)) {
       res.status(400).send({ errors });
       return;
     }
@@ -52,7 +51,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
     res.status(200).send();
     return;
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(400).send({ error: 'an unknown error occured' });
     return;
   }
@@ -60,9 +59,10 @@ router.post('/register', async (req: Request, res: Response) => {
 
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    let { email, password } = req.body;
+    const { password } = req.body;
+    let { email } = req.body;
     email = validator.escape(email);
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email });
     if (user) {
       if (await bcrypt.compare(password, user.password as string)) {
         const organization = await OrganizationUsers.findOne({ userId: user._id });
@@ -79,7 +79,7 @@ router.post('/login', async (req: Request, res: Response) => {
       res.status(400).send({ error: 'Username or password does not match' });
     }
     return;
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(400).send({ errors: 'an unknown error occured' });
     return;
   }
@@ -128,12 +128,12 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
           organizationId: '$organization._id',
           organization: '$organization.name',
         },
-      }
+      },
     ]);
 
     res.status(200).send(user[0]);
     return;
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(400).send({ errors: 'an unknown error occured' });
     return;
   }

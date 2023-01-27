@@ -1,10 +1,9 @@
 import { UploadedFile } from 'express-fileupload';
+import validator from 'validator';
 
 import { Group, User } from '../../models';
 import { IGroupPostErrors, IGroupPutErrors } from '../../types/group.types';
 import { GroupRole } from '../../types/roles.types';
-
-import validator from 'validator';
 
 export const groupPostValidation = async ({
   name,

@@ -1,10 +1,10 @@
-import { Group, GroupUsers, Organization, OrganizationGroup, OrganizationUsers, User } from '../../models';
-import { GroupRole, OrganizationRole } from '../../types/roles.types';
-import { UserStatus } from '../../types/user.types';
-
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+
+import { Group, GroupUsers, Organization, OrganizationGroup, OrganizationUsers, User } from '../../models';
+import { GroupRole, OrganizationRole } from '../../types/roles.types';
+import { UserStatus } from '../../types/user.types';
 
 export const createUsers = async ({ organizationId, count }: { organizationId: string; count: number }) => {
   const users = [];
