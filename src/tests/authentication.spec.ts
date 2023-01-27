@@ -1,12 +1,14 @@
 import 'dotenv/config';
-import request from 'supertest';
+
+import { Organization, OrganizationUsers, User } from '../models';
+import server from '../server';
+import { createOrganization, createUser } from '../utility/mock';
+
+import { database } from './config';
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-import server from '../server';
-import { database } from './config';
-import { Organization, OrganizationUsers, User } from '../models';
-import { createOrganization, createUser } from '../utility/mock';
+import request from 'supertest';
 
 describe('/authentication', () => {
   database('slumberhouse-test', server);
@@ -186,9 +188,7 @@ describe('/authentication', () => {
         organization: 'Slumberhouse',
       });
       expect(response.status).toBe(400);
-      expect(response.body.errors.password).toContain(
-        'Password must contain upper and lower case characters'
-      );
+      expect(response.body.errors.password).toContain('Password must contain upper and lower case characters');
     });
 
     it('fails if password does not contain at least 1 number', async () => {
@@ -227,9 +227,7 @@ describe('/authentication', () => {
         organization: 'Slumberhouse',
       });
       expect(response.status).toBe(400);
-      expect(response.body.errors.passwordConfirmation).toContain(
-        'Password confirmation must match password'
-      );
+      expect(response.body.errors.passwordConfirmation).toContain('Password confirmation must match password');
     });
 
     it('fails if email is not unique', async () => {
@@ -294,9 +292,7 @@ describe('/authentication', () => {
       const { id: organizationId } = await createOrganization();
       const { token } = await createUser({ organizationId });
 
-      const response = await request(server)
-        .get('/authentication/me')
-        .set('Authorization', `Bearer ${token}`);
+      const response = await request(server).get('/authentication/me').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
@@ -314,9 +310,7 @@ describe('/authentication', () => {
     });
 
     it('fails when token is not valid', async () => {
-      const response = await request(server)
-        .get('/authentication/me')
-        .set('Authorization', `Bearer fakeToken`);
+      const response = await request(server).get('/authentication/me').set('Authorization', `Bearer fakeToken`);
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Invalid token');
@@ -324,9 +318,7 @@ describe('/authentication', () => {
 
     it('fails when no user is associated with token', async () => {
       const token = jwt.sign({ id: '9543254' }, process.env.JWT_SECRET as string);
-      const response = await request(server)
-        .get('/authentication/me')
-        .set('Authorization', `Bearer ${token}`);
+      const response = await request(server).get('/authentication/me').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Invalid token');

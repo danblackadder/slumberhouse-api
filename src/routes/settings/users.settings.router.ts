@@ -1,9 +1,10 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
+
 import { OrganizationUsers, User } from '../../models';
-import { OrganizationRole, UserStatus } from '../../types';
-import { userPostValidation } from '../../utility/validation';
-import { userPutValidation } from '../../utility/validation/user.validation';
+import { OrganizationRole } from '../../types/roles.types';
+import { UserStatus } from '../../types/user.types';
+import { userPostValidation, userPutValidation } from '../../utility/validation/user.validation';
 
 const router = express.Router();
 
@@ -40,9 +41,7 @@ router.get('/', async (req: Request, res: Response) => {
       { $limit: limit },
     ]);
 
-    const totalDocuments = await OrganizationUsers.countDocuments([
-      { $match: { organizationId: user?.organizationId } },
-    ]);
+    const totalDocuments = await OrganizationUsers.countDocuments({ organizationId: user?.organizationId });
 
     res.status(200).send({
       users: aggregate,
@@ -63,7 +62,7 @@ router.post('/', async (req: Request, res: Response) => {
       email: req.body.email,
     });
 
-    if (Object.values(errors).some((value) => value.length > 0)) {
+    if (Object.values(errors).some((value: any) => value.length > 0)) {
       res.status(400).send({ errors });
       return;
     }
@@ -94,7 +93,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       token,
     });
 
-    if (Object.values(errors).some((value) => value.length > 0)) {
+    if (Object.values(errors).some((value: any) => value.length > 0)) {
       res.status(400).send({ errors });
       return;
     }

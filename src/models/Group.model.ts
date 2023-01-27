@@ -17,9 +17,9 @@ const schema = new mongoose.Schema(
 );
 
 export interface GroupSchemaType {
-  name: String;
-  description?: String;
-  image?: String;
+  name: string;
+  description?: string;
+  image?: string;
 }
 
 export default mongoose.model<GroupSchemaType>('Group', schema);

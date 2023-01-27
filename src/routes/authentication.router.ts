@@ -1,14 +1,17 @@
-import 'dotenv/config';
 import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
+
+import 'dotenv/config';
+
+import { verifyToken } from '../middleware';
+import { Organization, OrganizationUsers, User } from '../models';
+import { OrganizationRole } from '../types/roles.types';
+import { UserStatus } from '../types/user.types';
+import { authValidation } from '../utility/validation/authentication.validation';
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import validator from 'validator';
-import mongoose from 'mongoose';
-
-import { User, Organization, OrganizationUsers } from '../models';
-import { authValidation } from '../utility/validation';
-import { verifyToken } from '../middleware';
-import { OrganizationRole, UserStatus } from '../types';
 
 const router = express.Router();
 
@@ -23,7 +26,7 @@ router.post('/register', async (req: Request, res: Response) => {
       organization: req.body.organization,
     });
 
-    if (Object.values(errors).some((value) => value.length > 0)) {
+    if (Object.values(errors).some((value: any) => value.length > 0)) {
       res.status(400).send({ errors });
       return;
     }
@@ -108,6 +111,14 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
       },
       { $unwind: '$organization' },
       {
+        $lookup: {
+          from: 'groupusers',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'usergroups',
+        },
+      },
+      {
         $project: {
           _id: '$user._id',
           firstName: '$user.firstName',
@@ -117,7 +128,7 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
           organizationId: '$organization._id',
           organization: '$organization.name',
         },
-      },
+      }
     ]);
 
     res.status(200).send(user[0]);

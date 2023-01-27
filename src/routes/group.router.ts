@@ -1,11 +1,8 @@
 import express, { Request, Response } from 'express';
-import { UploadedFile } from 'express-fileupload';
-import { v4 as uuidv4 } from 'uuid';
 import mongoose from 'mongoose';
 
-import { Group, GroupUsers, Organization, OrganizationGroup, OrganizationUsers, User } from '../models';
-import { GroupRole } from '../types';
-import { groupValidation } from '../utility/validation';
+import { permissions } from '../middleware/permissions.middleware';
+import { GroupUsers } from '../models';
 
 const router = express.Router();
 
@@ -14,28 +11,36 @@ router.get('/', async (req: Request, res: Response) => {
     const { token } = req.body;
     const id = new mongoose.Types.ObjectId(token.userId);
 
-    const groups = await GroupUsers.aggregate()
-      .match({ userId: id })
-      .lookup({
-        from: 'groups',
-        localField: 'groupId',
-        foreignField: '_id',
-        as: 'group',
-      })
-      .unwind('$group')
-      .lookup({
-        from: 'groupusers',
-        localField: 'groupId',
-        foreignField: 'groupId',
-        as: 'users',
-      })
-      .project({
-        _id: '$group._id',
-        name: '$group.name',
-        description: '$group.description',
-        image: '$group.image',
-        users: { $size: '$users' },
-      });
+    const groups = await GroupUsers.aggregate([
+      { $match: { userId: id } },
+      {
+        $lookup: {
+          from: 'groups',
+          localField: 'groupId',
+          foreignField: '_id',
+          as: 'group',
+        },
+      },
+      { $unwind: '$group' },
+      {
+        $lookup: {
+          from: 'groupusers',
+          localField: 'groupId',
+          foreignField: 'groupId',
+          as: 'users',
+        },
+      },
+      {
+        $project: {
+          _id: '$group._id',
+          name: '$group.name',
+          description: '$group.description',
+          image: '$group.image',
+          role: '$role',
+          users: { $size: '$users' },
+        },
+      }
+    ]);
 
     res.status(200).send(groups);
     return;
@@ -46,41 +51,43 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/', async (req: Request, res: Response) => {
+router.get('/:id/users', permissions.groupAdmin, async (req: Request, res: Response) => {
   try {
-    const { errors, name, description, image } = await groupValidation({
-      name: req.body.name,
-      description: req.body.description,
-      image: req.files?.image as UploadedFile,
+    const groupId = new mongoose.Types.ObjectId(req.params.id);
+    const limit = Number(req.query.limit) || 10;
+    const currentPage = Number(req.query.page) || 1;
+
+    const aggregate = await GroupUsers.aggregate([
+      { $match: { groupId } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'users',
+        },
+      },
+      { $unwind: '$users' },
+      {
+        $project: {
+          _id: '$users._id',
+          firstName: '$users.firstName',
+          lastName: '$users.lastName',
+          email: '$users.email',
+          role: '$role',
+        },
+      },
+      { $skip: limit * (currentPage - 1) },
+      { $limit: limit },
+    ]);
+
+    const totalDocuments = await GroupUsers.countDocuments({ groupId });
+    const total = await GroupUsers.find({ groupId });
+
+    res.status(200).send({
+      users: aggregate,
+      pagination: { totalDocuments, totalPages: Math.ceil(totalDocuments / limit), currentPage, limit },
     });
-
-    if (Object.values(errors).some((value) => value.length > 0)) {
-      res.status(400).send({ errors });
-      return;
-    }
-
-    let filename;
-    if (image) {
-      filename = `${uuidv4()}.${image?.name.split('.')[1]}`;
-      if (process.env.NODE_ENV !== 'test') {
-        image.mv(`${__dirname}/../../uploads/${filename}`);
-      }
-    }
-    var fullUrl = `${req.protocol}://${req.get('host')}/uploads`;
-
-    const organization = await OrganizationUsers.findOne({ userId: req.body.token.userId });
-    const group = await Group.create({ name, description, image: `${fullUrl}/${filename}` });
-    await GroupUsers.create({
-      role: GroupRole.ADMIN,
-      userId: req.body.token.userId,
-      groupId: group._id,
-    });
-    await OrganizationGroup.create({
-      organizationId: organization?.organizationId,
-      groupId: group?._id,
-    });
-
-    res.status(200).send();
     return;
   } catch (err: any) {
     console.log(err);

@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
-import { OrganizationRole, UserStatus } from '../types';
+
+import { OrganizationRole } from '../types/roles.types';
+import { UserStatus } from '../types/user.types';
 
 const schema = new mongoose.Schema(
   {

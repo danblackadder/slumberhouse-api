@@ -1,9 +1,12 @@
+import { NextFunction, Request, Response } from 'express';
+
 import 'dotenv/config';
-import jwt from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
-import { getToken } from '../utility';
+
 import { User } from '../models';
 import { Token } from '../types/authentication.types';
+import { getToken } from '../utility';
+
+import jwt from 'jsonwebtoken';
 
 const unauthorized = (res: Response) => {
   res.status(401).send({ error: 'Unauthorized request' });

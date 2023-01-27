@@ -11,7 +11,7 @@ const schema = new mongoose.Schema(
 );
 
 export interface OrganizationSchemaType {
-  name: String;
+  name: string;
 }
 
 export default mongoose.model<OrganizationSchemaType>('Organization', schema);

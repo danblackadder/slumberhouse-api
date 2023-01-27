@@ -1,9 +1,13 @@
+import { NextFunction, Request, Response } from 'express';
+import mongoose from 'mongoose';
+
 import 'dotenv/config';
-import jwt from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
+
+import { GroupUsers, OrganizationUsers, User } from '../models';
+import { GroupRole, OrganizationRole } from '../types/roles.types';
 import { getToken } from '../utility';
-import { OrganizationUsers, User } from '../models';
-import { OrganizationRole } from '../types';
+
+import jwt from 'jsonwebtoken';
 
 const unauthorized = (res: Response) => {
   res.status(401).send({ error: 'Unauthorized request' });
@@ -15,15 +19,9 @@ export const permissions = {
     try {
       const { organizationId, userId } = req.body.token;
 
-      console.log(organizationId, userId);
       const organizationUser = await OrganizationUsers.findOne({ organizationId, userId });
 
-      console.log(organizationUser);
-
-      if (
-        organizationUser?.role !== OrganizationRole.OWNER &&
-        organizationUser?.role !== OrganizationRole.ADMIN
-      ) {
+      if (organizationUser?.role !== OrganizationRole.OWNER && organizationUser?.role !== OrganizationRole.ADMIN) {
         unauthorized(res);
         return;
       }
@@ -41,6 +39,29 @@ export const permissions = {
       const organizationUser = await OrganizationUsers.findOne({ organizationId, userId });
 
       if (organizationUser?.role !== OrganizationRole.OWNER) {
+        unauthorized(res);
+        return;
+      }
+
+      next();
+    } catch (err) {
+      res.status(401).send({ error: 'Invalid token' });
+    }
+  },
+
+  groupAdmin: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { organizationId, userId } = req.body.token;
+      const groupId = new mongoose.Types.ObjectId(req.params.id);
+
+      const organizationUser = await OrganizationUsers.findOne({ organizationId, userId });
+      const groupUser = await GroupUsers.findOne({ groupId, userId });
+
+      if (
+        groupUser?.role !== GroupRole.ADMIN &&
+        organizationUser?.role !== OrganizationRole.OWNER &&
+        organizationUser?.role !== OrganizationRole.ADMIN
+      ) {
         unauthorized(res);
         return;
       }

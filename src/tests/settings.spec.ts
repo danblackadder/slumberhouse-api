@@ -1,13 +1,15 @@
 import 'dotenv/config';
-import request from 'supertest';
-import bcrypt from 'bcryptjs';
 
+import { Group, GroupUsers, OrganizationUsers, User } from '../models';
 import server from '../server';
+import { GroupRole, OrganizationRole } from '../types/roles.types';
+import { createGroups, createOrganization, createUser, createUsers } from '../utility/mock';
+
 import { database } from './config';
-import { createOrganization, createUser, createUsers } from '../utility/mock';
-import { OrganizationUsers, User } from '../models';
-import { OrganizationRole, UserStatus } from '../types';
+
 import { faker } from '@faker-js/faker';
+import path from 'path';
+import request from 'supertest';
 
 describe('/settings', () => {
   database('slumberhouse-test', server);
@@ -134,9 +136,7 @@ describe('/settings', () => {
         const { id: organizationId } = await createOrganization();
         const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
 
-        const response = await request(server)
-          .post('/settings/users/')
-          .set('Authorization', `Bearer ${token}`);
+        const response = await request(server).post('/settings/users/').set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(400);
         expect(response.body.errors.email).toContain('Email must be supplied');
@@ -322,12 +322,204 @@ describe('/settings', () => {
         const { id: organizationId } = await createOrganization();
         const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
 
-        const response = await request(server)
-          .delete(`/settings/users/1`)
-          .set('Authorization', `Bearer ${token}`);
+        const response = await request(server).delete(`/settings/users/1`).set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(400);
         expect(response.body.errors).toBe('User id must be a valid id');
+      });
+    });
+  });
+
+  describe('/groups', () => {
+    describe('GET /', () => {
+      it('returns users associated with a company if user is organization owner', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createGroups({ userId, organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(2);
+      });
+
+      it('returns users associated with a company if user is organization admin', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.ADMIN });
+        await createGroups({ userId, organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(2);
+      });
+
+      it('fails if user is not organization owner or admin', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.BASIC });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe('Unauthorized request');
+        expect(response.body.groups).toBeUndefined();
+      });
+
+      it('returns paginated users', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createGroups({ userId, organizationId, count: 50 });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.groups).toHaveLength(20);
+        expect(response.body.pagination.totalDocuments).toBe(50);
+        expect(response.body.pagination.currentPage).toBe(1);
+        expect(response.body.pagination.totalPages).toBe(3);
+      });
+    });
+
+    describe('POST /', () => {
+      it('successfully creates a new group with a name if user is organization owner', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const name = faker.name.jobArea();
+
+        const response = await request(server)
+          .post('/settings/groups/')
+          .send({
+            name,
+          })
+          .set('Authorization', `Bearer ${token}`);
+
+        const group = await Group.findOne({ name });
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(group).not.toBe(null);
+        expect(group?.name).toBe(name);
+      });
+
+      it('successfully creates a new group with a name if user is organization admin', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.ADMIN });
+        const name = faker.name.jobArea();
+
+        const response = await request(server)
+          .post('/settings/groups/')
+          .send({
+            name,
+          })
+          .set('Authorization', `Bearer ${token}`);
+
+        const group = await Group.findOne({ name });
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(group).not.toBe(null);
+        expect(group?.name).toBe(name);
+      });
+
+      it('fails if user is not organization owner or admin', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.BASIC });
+        const name = faker.name.jobArea();
+
+        const response = await request(server)
+          .post('/settings/groups/')
+          .send({
+            name,
+          })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe('Unauthorized request');
+        expect(response.body.groups).toBeUndefined();
+      });
+
+      it('successfully creates a new group with a description', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const name = faker.name.jobArea();
+        const description = faker.lorem.paragraph();
+
+        const response = await request(server)
+          .post('/settings/groups/')
+          .send({
+            name,
+            description,
+          })
+          .set('Authorization', `Bearer ${token}`);
+
+        const group = await Group.findOne({ name });
+
+        expect(response.status).toBe(200);
+        expect(response.body.error).toBeUndefined();
+        expect(group).not.toBe(null);
+        expect(group?.description).toBe(description);
+      });
+
+      it('successfully creates a new group with an image', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const name = faker.name.jobArea();
+        const image = path.resolve(__dirname, `./assets/logo.png`);
+
+        const response = await request(server)
+          .post('/settings/groups/')
+          .set('content-type', 'application/octet-stream')
+          .set('Authorization', `Bearer ${token}`)
+          .field('name', name)
+          .attach('image', image);
+
+        const group = await Group.findOne({ name });
+
+        expect(response.status).toBe(200);
+        expect(response.body.error).toBeUndefined();
+        expect(group).not.toBe(null);
+        expect(group?.image).not.toBe(null);
+      });
+
+      it('successfully updates users with access to a new group', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const name = faker.name.jobArea();
+        const users = await createUsers({ organizationId, count: 2 });
+        const groupUsers = users.map((user) => {
+          return {
+            userId: user.id,
+            role: GroupRole.BASIC,
+          };
+        });
+
+        const response = await request(server)
+          .post('/settings/groups/')
+          .send({
+            name,
+            users: groupUsers,
+          })
+          .set('Authorization', `Bearer ${token}`);
+
+        const group = await Group.findOne({ name });
+
+        expect(response.status).toBe(200);
+        expect(response.body.error).toBeUndefined();
+        expect(group).not.toBe(null);
       });
     });
   });

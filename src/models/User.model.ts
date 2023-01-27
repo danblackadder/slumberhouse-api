@@ -21,10 +21,10 @@ const schema = new mongoose.Schema(
 );
 
 export interface UserSchemaType {
-  firstName: String;
-  lastName: String;
-  email: String;
-  password: String;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
 }
 
 export default mongoose.model<UserSchemaType>('User', schema);

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { GroupRole } from '../types';
+import { GroupRole } from '../types/roles.types';
 
 const schema = new mongoose.Schema(
   {
