@@ -2,6 +2,7 @@ import request from 'supertest';
 
 import 'dotenv/config';
 
+import { GroupUsers } from '../models';
 import server from '../server';
 import { GroupRole, OrganizationRole } from '../types/roles.types';
 import {
@@ -14,7 +15,6 @@ import {
 } from '../utility/mock';
 
 import { database } from './config';
-import { GroupUsers } from '../models';
 
 describe('/group', () => {
   database('slumberhouse-test', server);
