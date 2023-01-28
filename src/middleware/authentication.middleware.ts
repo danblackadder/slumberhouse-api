@@ -21,11 +21,13 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as Token;
-    await User.findById(decoded.userId);
+    if (!(await User.findById(decoded.userId))) {
+      throw Error;
+    }
 
     req.body['token'] = decoded;
     next();
-  } catch (err) {
+  } catch (err: unknown) {
     res.status(401).send({ error: 'Invalid token' });
   }
 };

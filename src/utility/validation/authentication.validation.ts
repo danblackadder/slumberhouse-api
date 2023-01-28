@@ -54,7 +54,7 @@ export const authValidation = async ({
       errors.email.push('Email must be a valid email address');
     }
 
-    email = validator.escape(email);
+    email = validator.escape(email).toLowerCase();
   }
 
   if (!organization) {

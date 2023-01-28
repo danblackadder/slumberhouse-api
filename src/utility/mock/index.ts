@@ -18,7 +18,7 @@ export const createUsers = async ({ organizationId, count }: { organizationId: s
 
 export const createUser = async ({
   organizationId,
-  email = faker.internet.email(),
+  email = faker.internet.email().toLowerCase(),
   password = faker.internet.password(),
   role = OrganizationRole.BASIC,
   status = [UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.INVITED].sort(() => 0.5 - Math.random()).slice(0, 1)[0],

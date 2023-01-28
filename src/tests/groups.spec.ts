@@ -114,7 +114,80 @@ describe('/group', () => {
     });
   });
 
-  describe.only('POST /:id/users/:userId', () => {
+  describe('GET /:id/users/available', () => {
+    it('returns users associated with a group if user is organization owner', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+      await createUsers({ organizationId, count: 2 });
+      const group = await createGroup({ userId, organizationId });
+
+      const response = await request(server)
+        .get(`/groups/${group.id}/users/available`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
+
+    it('returns users associated with a group if user is organization admin', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.ADMIN });
+      await createUsers({ organizationId, count: 2 });
+      const group = await createGroup({ userId, organizationId });
+
+      const response = await request(server)
+        .get(`/groups/${group.id}/users/available`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
+
+    it('returns users associated with a group if user is group admin', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.BASIC });
+      await createUsers({ organizationId, count: 2 });
+      const group = await createGroup({ userId, organizationId, role: GroupRole.ADMIN });
+
+      const response = await request(server)
+        .get(`/groups/${group.id}/users/available`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
+
+    it('returns user even if user is in another group', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+      const users = await createUsers({ organizationId, count: 2 });
+      const group = await createGroup({ userId, organizationId });
+      await createGroup({ userId: users[0].id, organizationId });
+
+      const response = await request(server)
+        .get(`/groups/${group.id}/users/available`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+    });
+
+    it('fails if user is not organization owner, admin or group admin', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.BASIC });
+      await createUsers({ organizationId, count: 2 });
+      const group = await createGroup({ userId, organizationId });
+
+      const response = await request(server)
+        .get(`/groups/${group.id}/users/available`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Unauthorized request');
+    });
+  });
+
+  describe('POST /:id/users/:userId', () => {
     it('successfully adds a new user to a group if user is organization owner', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
@@ -197,6 +270,68 @@ describe('/group', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
       expect(groupUsers?.role).toBe(GroupRole.ADMIN);
+    });
+  });
+
+  describe('DELETE /:id/users/:userId', () => {
+    it('successfully removes a user from a group if user is organization owner', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+      const user = await createUser({ organizationId });
+      const group = await createGroup({ userId, organizationId });
+      await createGroupUser({ userId: user.id, groupId: group.id });
+
+      const response = await request(server)
+        .delete(`/groups/${group.id}/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+    });
+
+    it('successfully removes a user from a group if user is organization admin', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.ADMIN });
+      const user = await createUser({ organizationId });
+      const group = await createGroup({ userId, organizationId });
+      await createGroupUser({ userId: user.id, groupId: group.id });
+
+      const response = await request(server)
+        .delete(`/groups/${group.id}/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+    });
+
+    it('successfully removes a user from a group if user is group admin', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.BASIC });
+      const user = await createUser({ organizationId });
+      const group = await createGroup({ userId, organizationId, role: GroupRole.ADMIN });
+      await createGroupUser({ userId: user.id, groupId: group.id });
+
+      const response = await request(server)
+        .delete(`/groups/${group.id}/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeUndefined();
+    });
+
+    it('fails if user is not organization owner, admin or group admin', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.BASIC });
+      const user = await createUser({ organizationId });
+      const group = await createGroup({ userId, organizationId });
+      await createGroupUser({ userId: user.id, groupId: group.id });
+
+      const response = await request(server)
+        .delete(`/groups/${group.id}/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Unauthorized request');
     });
   });
 });

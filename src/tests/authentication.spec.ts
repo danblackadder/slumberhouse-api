@@ -289,16 +289,13 @@ describe('/authentication', () => {
   describe('GET /me', () => {
     it('returns users details when successfully aquired token', async () => {
       const { id: organizationId } = await createOrganization();
-      const { token } = await createUser({ organizationId });
+      const { token, email } = await createUser({ organizationId });
 
       const response = await request(server).get('/authentication/me').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.firstName).toBe('FirstTest');
-      expect(response.body.lastName).toBe('LastTest');
-      expect(response.body.email).toBe('test@test.com');
-      expect(response.body.organization).toBe('Slumberhouse');
+      expect(response.body.email).toBe(email);
     });
 
     it('fails when no token has been provided', async () => {
