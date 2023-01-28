@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use('/authentication', Authentication);
-app.use('/group', verifyToken, Group);
+app.use('/groups', verifyToken, Group);
 app.use('/settings', [verifyToken, permissions.organizationAdmin], Settings);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 import { permissions } from '../middleware/permissions.middleware';
 import { GroupUsers } from '../models';
+import { GroupRole } from '../types/roles.types';
 
 const router = express.Router();
 
@@ -92,6 +93,24 @@ router.get('/:id/users', permissions.groupAdmin, async (req: Request, res: Respo
     console.log(err);
     res.status(500).send({ errors: 'an unknown error occured' });
     return;
+  }
+});
+
+router.post('/:id/users/:userId', permissions.groupAdmin, async (req: Request, res: Response) => {
+  try {
+    const groupId = new mongoose.Types.ObjectId(req.params.id);
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    await GroupUsers.create({ groupId, userId, role: req.body.role || GroupRole.BASIC });
+
+    res.status(200).send();
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'CastError') {
+      res.status(400).send({ errors: 'User and Group id must be a valid id' });
+      return;
+    }
+    console.log(err);
+    res.status(500).send({ errors: 'an unknown error occured' });
   }
 });
 
