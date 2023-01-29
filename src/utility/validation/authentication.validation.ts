@@ -95,17 +95,6 @@ export const authValidation = async ({
     ) {
       errors.password.push('Password must contain at least 1 number');
     }
-
-    if (
-      !validator.isStrongPassword(password, {
-        minUppercase: 0,
-        minLowercase: 0,
-        minNumbers: 0,
-        minSymbols: 1,
-      })
-    ) {
-      errors.password.push('Password must contain at least 1 special character');
-    }
   }
 
   if (!passwordConfirmation) {

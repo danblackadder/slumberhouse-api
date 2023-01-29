@@ -10,3 +10,8 @@ export interface IGroupPutErrors {
   users: string[];
   groupId: string[];
 }
+
+export interface IGroupUserPutErrors {
+  role: string[];
+  group: string[];
+}

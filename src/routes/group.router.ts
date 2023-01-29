@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { permissions } from '../middleware/permissions.middleware';
 import { GroupUsers, OrganizationUsers } from '../models';
 import { GroupRole } from '../types/roles.types';
+import { groupUserPutValidation } from '../utility/validation/group.validation';
 
 const router = express.Router();
 
@@ -132,8 +133,6 @@ router.get('/:id/users/available', permissions.groupAdmin, async (req: Request, 
       },
     ]);
 
-    console.log(users);
-
     res.status(200).send(users);
     return;
   } catch (err: unknown) {
@@ -149,6 +148,35 @@ router.post('/:id/users/:userId', permissions.groupAdmin, async (req: Request, r
     const userId = new mongoose.Types.ObjectId(req.params.userId);
 
     await GroupUsers.create({ groupId, userId, role: req.body.role || GroupRole.BASIC });
+
+    res.status(200).send();
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'CastError') {
+      res.status(400).send({ errors: 'User and Group id must be a valid id' });
+      return;
+    }
+    console.log(err);
+    res.status(500).send({ errors: 'an unknown error occured' });
+  }
+});
+
+router.put('/:id/users/:userId', permissions.groupAdmin, async (req: Request, res: Response) => {
+  try {
+    const { errors, role } = await groupUserPutValidation({
+      role: req.body.role,
+      groupId: req.params.id,
+      userId: req.params.userId,
+    });
+
+    if (Object.values(errors).some((value: string[]) => value.length > 0)) {
+      res.status(400).send({ errors });
+      return;
+    }
+
+    const groupId = new mongoose.Types.ObjectId(req.params.id);
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    await GroupUsers.findOneAndUpdate({ groupId, userId }, { role });
 
     res.status(200).send();
   } catch (err: unknown) {

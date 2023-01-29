@@ -1,8 +1,8 @@
 import { UploadedFile } from 'express-fileupload';
 import validator from 'validator';
 
-import { Group, User } from '../../models';
-import { IGroupPostErrors, IGroupPutErrors } from '../../types/group.types';
+import { Group, GroupUsers, User } from '../../models';
+import { IGroupPostErrors, IGroupPutErrors, IGroupUserPutErrors } from '../../types/group.types';
 import { GroupRole } from '../../types/roles.types';
 
 export const groupPostValidation = async ({
@@ -109,5 +109,33 @@ export const groupPutValidation = async ({
     description,
     image,
     groupId,
+  };
+};
+
+export const groupUserPutValidation = async ({
+  role,
+  userId,
+  groupId,
+}: {
+  role: GroupRole;
+  userId: string;
+  groupId: string;
+}) => {
+  const errors = {
+    role: [],
+    group: [],
+  } as IGroupUserPutErrors;
+
+  if (!role) {
+    errors.role.push('Role must be provided');
+  }
+
+  if (!(await GroupUsers.findOne({ userId, groupId }))) {
+    errors.group.push('User does not belong to group');
+  }
+
+  return {
+    errors,
+    role,
   };
 };

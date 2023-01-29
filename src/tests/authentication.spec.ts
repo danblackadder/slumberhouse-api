@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { faker } from '@faker-js/faker';
 import jwt from 'jsonwebtoken';
 
 import 'dotenv/config';
@@ -14,17 +15,23 @@ describe('/authentication', () => {
 
   describe('POST /register', () => {
     it('successfully registers new user', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        firstName,
+        lastName,
+        email,
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
 
-      const user = await User.findOne({ email: 'test@test.com' });
-      const organization = await Organization.findOne({ name: 'Slumberhouse ' });
+      const user = await User.findOne({ email: email.toLowerCase() });
+      const organization = await Organization.findOne({ name: organizationName });
       const organizationUser = await OrganizationUsers.find({
         userId: user?._id,
         organizationId: organization?._id,
@@ -32,20 +39,25 @@ describe('/authentication', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(user?.firstName).toBe('FirstTest');
-      expect(user?.lastName).toBe('LastTest');
-      expect(user?.email).toBe('test@test.com');
-      expect(organization).toBeDefined();
+      expect(user?.firstName).toBe(firstName);
+      expect(user?.lastName).toBe(lastName);
+      expect(user?.email).toBe(email.toLowerCase());
+      expect(organization?.name).toBe(organizationName);
       expect(organizationUser).toBeDefined();
     });
 
     it('fails if first name is not passed', async () => {
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        lastName,
+        email,
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
 
       expect(response.status).toBe(400);
@@ -53,87 +65,122 @@ describe('/authentication', () => {
     });
 
     it('fails if first name is shorter than 2 characters', async () => {
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
         firstName: 's',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        lastName,
+        email,
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.firstName).toContain('First name must be longer than 2 characters');
     });
 
     it('fails if last name is not passed', async () => {
+      const firstName = faker.name.firstName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        firstName,
+        email,
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.lastName).toContain('Last name must be supplied');
     });
 
     it('fails if last name is shorter than 2 characters', async () => {
+      const firstName = faker.name.firstName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
+        firstName,
         lastName: 's',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        email,
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.lastName).toContain('Last name must be longer than 2 characters');
     });
 
     it('fails if email is not passed', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        firstName,
+        lastName,
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.email).toContain('Email must be supplied');
     });
 
     it('fails if email is not a valid email', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
+        firstName,
+        lastName,
         email: 's@s',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.email).toContain('Email must be a valid email address');
     });
 
     it('fails if organization is not passed', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
+        firstName,
+        lastName,
+        email,
+        password,
+        passwordConfirmation: password,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.organization).toContain('Organization must be supplied');
     });
 
-    it('fails if last name is shorter than 2 characters', async () => {
+    it('fails if organization is shorter than 2 characters', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
+        firstName,
+        lastName,
+        email,
+        password,
+        passwordConfirmation: password,
         organization: 's',
       });
       expect(response.status).toBe(400);
@@ -141,105 +188,130 @@ describe('/authentication', () => {
     });
 
     it('fails if password is not passed', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        firstName,
+        lastName,
+        email,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.password).toContain('Password must be supplied');
     });
 
     it('fails if password confirmation is not passed', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        firstName,
+        lastName,
+        email,
+        password,
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.passwordConfirmation).toContain('Password confirmation must be supplied');
     });
 
     it('fails if password does not contain at least 8 characters', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
+        firstName,
+        lastName,
+        email,
         password: 'P@s5',
         passwordConfirmation: 'P@s5',
-        organization: 'Slumberhouse',
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.password).toContain('Password must be longer than 8 characters');
     });
 
     it('fails if password does not contain upper and lower case characters', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
+        firstName,
+        lastName,
+        email,
         password: 'p@55word',
         passwordConfirmation: 'p@55word',
-        organization: 'Slumberhouse',
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.password).toContain('Password must contain upper and lower case characters');
     });
 
     it('fails if password does not contain at least 1 number', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
+        firstName,
+        lastName,
+        email,
         password: 'P@ssWord',
         passwordConfirmation: 'P@ssWord',
-        organization: 'Slumberhouse',
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.password).toContain('Password must contain at least 1 number');
     });
 
-    it('fails if password does not contain at least 1 special character', async () => {
-      const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'PassW0rd',
-        passwordConfirmation: 'PassW0rd',
-        organization: 'Slumberhouse',
-      });
-      expect(response.status).toBe(400);
-      expect(response.body.errors.password).toContain('Password must contain at least 1 special character');
-    });
-
     it('fails if password confirmation does not match password', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const email = faker.internet.email();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8b',
-        organization: 'Slumberhouse',
+        firstName,
+        lastName,
+        email,
+        password,
+        passwordConfirmation: 'wrongPassword',
+        organization: organizationName,
       });
       expect(response.status).toBe(400);
       expect(response.body.errors.passwordConfirmation).toContain('Password confirmation must match password');
     });
 
     it('fails if email is not unique', async () => {
+      const firstName = faker.name.firstName();
+      const lastName = faker.name.lastName();
+      const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
+      const organizationName = faker.company.name();
+
       const { id: organizationId } = await createOrganization();
       const { email } = await createUser({ organizationId });
 
       const response = await request(server).post('/authentication/register').send({
-        firstName: 'FirstTest',
-        lastName: 'LastTest',
+        firstName,
+        lastName,
         email,
-        password: 'fr5T$kE@LNy8p8a',
-        passwordConfirmation: 'fr5T$kE@LNy8p8a',
-        organization: 'Slumberhouse',
+        password,
+        passwordConfirmation: password,
+        organization: organizationName,
       });
 
       expect(response.status).toBe(400);
@@ -276,9 +348,12 @@ describe('/authentication', () => {
     });
 
     it('fails if user does not exist', async () => {
+      const email = faker.internet.email();
+      const password = faker.internet.password();
+
       const response = await request(server).post('/authentication/login').send({
-        email: 'test@test.com',
-        password: 'fr5T$kE@LNy8p8a',
+        email,
+        password,
       });
 
       expect(response.status).toBe(400);
