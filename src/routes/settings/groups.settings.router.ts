@@ -4,9 +4,9 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Group, GroupUsers, OrganizationGroup, OrganizationUsers } from '../../models';
-import { groupPostValidation, groupPutValidation } from '../../utility/validation/group.validation';
 import { IGetSettingsGroupFilter, IGetSettingsGroupSort } from '../../types/settings.types';
 import { groupSettingAggregate } from '../../utility/aggregates/settings/group.settings.aggregates';
+import { groupPostValidation, groupPutValidation } from '../../utility/validation/group.validation';
 
 const router = express.Router();
 

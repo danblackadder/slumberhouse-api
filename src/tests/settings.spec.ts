@@ -7,6 +7,7 @@ import 'dotenv/config';
 import { Group, OrganizationUsers, User } from '../models';
 import server from '../server';
 import { GroupRole, OrganizationRole } from '../types/roles.types';
+import { UserStatus } from '../types/user.types';
 import {
   createGroup,
   createGroups,
@@ -17,7 +18,6 @@ import {
 } from '../utility/mock';
 
 import { database } from './config';
-import { UserStatus } from '../types/user.types';
 
 describe('/settings', () => {
   database('slumberhouse-test', server);
