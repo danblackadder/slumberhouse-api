@@ -1,57 +1,40 @@
 import express, { Request, Response } from 'express';
 import { UploadedFile } from 'express-fileupload';
-import mongoose from 'mongoose';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Group, GroupUsers, OrganizationGroup, OrganizationUsers } from '../../models';
 import { groupPostValidation, groupPutValidation } from '../../utility/validation/group.validation';
+import { IGetSettingsGroupFilter, IGetSettingsGroupSort } from '../../types/settings.types';
+import { groupSettingAggregate } from '../../utility/aggregates/settings/group.settings.aggregates';
 
 const router = express.Router();
 
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    const id = new mongoose.Types.ObjectId(token.userId);
     const limit = Number(req.query.limit) || 10;
     const currentPage = Number(req.query.page) || 1;
+    const sort = {
+      name: Number(req.query.sortName) || 0,
+      users: Number(req.query.sortUsers) || 0,
+    } as IGetSettingsGroupSort;
+    const filter = {
+      name: req.query.filterName,
+    } as IGetSettingsGroupFilter;
 
-    const organization = await OrganizationUsers.findOne({ userId: id });
-    const aggregate = await OrganizationGroup.aggregate([
-      { $match: { organizationId: organization?.organizationId } },
-      {
-        $lookup: {
-          from: 'groups',
-          localField: 'groupId',
-          foreignField: '_id',
-          as: 'group',
-        },
-      },
-      { $unwind: '$group' },
-      {
-        $lookup: {
-          from: 'groupusers',
-          localField: 'groupId',
-          foreignField: 'groupId',
-          as: 'users',
-        },
-      },
-      {
-        $project: {
-          _id: '$group._id',
-          name: '$group.name',
-          description: '$group.description',
-          image: '$group.image',
-          users: { $size: '$users' },
-        },
-      },
-      { $skip: limit * (currentPage - 1) },
-      { $limit: limit },
-    ]);
+    const aggregate = await OrganizationGroup.aggregate(
+      await groupSettingAggregate({ userId: token.userId, sort, filter, limit, currentPage })
+    );
 
-    const totalDocuments = await OrganizationGroup.countDocuments({
-      organizationId: organization?.organizationId,
-    });
+    const totalAggregate = await OrganizationGroup.aggregate(
+      await groupSettingAggregate({ userId: token.userId, sort, filter, count: true })
+    );
+
+    let totalDocuments = 0;
+    if (totalAggregate[0]?.totalDocuments > 0) {
+      totalDocuments = totalAggregate[0].totalDocuments;
+    }
 
     res.status(200).send({
       groups: aggregate,

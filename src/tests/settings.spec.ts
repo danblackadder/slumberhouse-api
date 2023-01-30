@@ -7,9 +7,17 @@ import 'dotenv/config';
 import { Group, OrganizationUsers, User } from '../models';
 import server from '../server';
 import { GroupRole, OrganizationRole } from '../types/roles.types';
-import { createGroups, createOrganization, createUser, createUsers } from '../utility/mock';
+import {
+  createGroup,
+  createGroups,
+  createGroupUser,
+  createOrganization,
+  createUser,
+  createUsers,
+} from '../utility/mock';
 
 import { database } from './config';
+import { UserStatus } from '../types/user.types';
 
 describe('/settings', () => {
   database('slumberhouse-test', server);
@@ -75,6 +83,358 @@ describe('/settings', () => {
         expect(response.body.pagination.totalDocuments).toBe(51);
         expect(response.body.pagination.currentPage).toBe(1);
         expect(response.body.pagination.totalPages).toBe(3);
+      });
+
+      it('returns users associated with a company sorted by first name asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUsers({ organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortFirstName: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const users = (await User.find({})).map((user) => user.firstName).sort();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].firstName).toBe(users[0]);
+        expect(response.body.users[1].firstName).toBe(users[1]);
+        expect(response.body.users[2].firstName).toBe(users[2]);
+      });
+
+      it('returns users associated with a company sorted by first name desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUsers({ organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortFirstName: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const users = (await User.find({}))
+          .map((user) => user.firstName)
+          .sort()
+          .reverse();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].firstName).toBe(users[0]);
+        expect(response.body.users[1].firstName).toBe(users[1]);
+        expect(response.body.users[2].firstName).toBe(users[2]);
+      });
+
+      it('returns users associated with a company sorted by last name asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUsers({ organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortLastName: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const users = (await User.find({})).map((user) => user.lastName).sort();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].lastName).toBe(users[0]);
+        expect(response.body.users[1].lastName).toBe(users[1]);
+        expect(response.body.users[2].lastName).toBe(users[2]);
+      });
+
+      it('returns users associated with a company sorted by last name desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUsers({ organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortLastName: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const users = (await User.find({}))
+          .map((user) => user.lastName)
+          .sort()
+          .reverse();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].lastName).toBe(users[0]);
+        expect(response.body.users[1].lastName).toBe(users[1]);
+        expect(response.body.users[2].lastName).toBe(users[2]);
+      });
+
+      it('returns users associated with a company sorted by email asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUsers({ organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortEmail: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const users = (await User.find({})).map((user) => user.email).sort();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].email).toBe(users[0]);
+        expect(response.body.users[1].email).toBe(users[1]);
+        expect(response.body.users[2].email).toBe(users[2]);
+      });
+
+      it('returns users associated with a company sorted by email desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUsers({ organizationId, count: 2 });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortEmail: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const users = (await User.find({}))
+          .map((user) => user.email)
+          .sort()
+          .reverse();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].email).toBe(users[0]);
+        expect(response.body.users[1].email).toBe(users[1]);
+        expect(response.body.users[2].email).toBe(users[2]);
+      });
+
+      it('returns users associated with a company sorted by role asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, role: OrganizationRole.BASIC });
+        await createUser({ organizationId, role: OrganizationRole.ADMIN });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortRole: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].role).toBe(OrganizationRole.OWNER);
+        expect(response.body.users[1].role).toBe(OrganizationRole.ADMIN);
+        expect(response.body.users[2].role).toBe(OrganizationRole.BASIC);
+      });
+
+      it('returns users associated with a company sorted by role desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, role: OrganizationRole.BASIC });
+        await createUser({ organizationId, role: OrganizationRole.ADMIN });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortRole: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].role).toBe(OrganizationRole.BASIC);
+        expect(response.body.users[1].role).toBe(OrganizationRole.ADMIN);
+        expect(response.body.users[2].role).toBe(OrganizationRole.OWNER);
+      });
+
+      it('returns users associated with a company sorted by status asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, status: UserStatus.INVITED });
+        await createUser({ organizationId, status: UserStatus.INACTIVE });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortStatus: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].status).toBe(UserStatus.ACTIVE);
+        expect(response.body.users[1].status).toBe(UserStatus.INVITED);
+        expect(response.body.users[2].status).toBe(UserStatus.INACTIVE);
+      });
+
+      it('returns users associated with a company sorted by status desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, status: UserStatus.INVITED });
+        await createUser({ organizationId, status: UserStatus.INACTIVE });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, sortStatus: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(3);
+        expect(response.body.users[0].status).toBe(UserStatus.INACTIVE);
+        expect(response.body.users[1].status).toBe(UserStatus.INVITED);
+        expect(response.body.users[2].status).toBe(UserStatus.ACTIVE);
+      });
+
+      it('returns users associated with a company filtered by firstName', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const { id: userId } = await createUser({ organizationId });
+        const user = await User.findById(userId);
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterNameEmail: user?.firstName.slice(1, 3) })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].firstName).toBe(user?.firstName);
+      });
+
+      it('returns users associated with a company filtered by lastName', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const { id: userId } = await createUser({ organizationId });
+        const user = await User.findById(userId);
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterNameEmail: user?.lastName.slice(1, 3) })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].lastName).toBe(user?.lastName);
+      });
+
+      it('returns users associated with a company filtered by email', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const { id: userId } = await createUser({ organizationId });
+        const user = await User.findById(userId);
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterNameEmail: user?.email.slice(1, 3) })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].email).toBe(user?.email);
+      });
+
+      it('returns users associated with a company filtered by role owner', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, role: OrganizationRole.ADMIN });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterRole: OrganizationRole.OWNER })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].role).toBe(OrganizationRole.OWNER);
+      });
+
+      it('returns users associated with a company filtered by role admin', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, role: OrganizationRole.ADMIN });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterRole: OrganizationRole.ADMIN })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].role).toBe(OrganizationRole.ADMIN);
+      });
+
+      it('returns users associated with a company filtered by role basic', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, role: OrganizationRole.BASIC });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterRole: OrganizationRole.BASIC })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].role).toBe(OrganizationRole.BASIC);
+      });
+
+      it('returns users associated with a company filtered by status active', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, status: UserStatus.INACTIVE });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterStatus: UserStatus.ACTIVE })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].status).toBe(UserStatus.ACTIVE);
+      });
+
+      it('returns users associated with a company filtered by status invited', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, status: UserStatus.INVITED });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterStatus: UserStatus.INVITED })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].status).toBe(UserStatus.INVITED);
+      });
+
+      it('returns users associated with a company filtered by status inactive', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createUser({ organizationId, status: UserStatus.INACTIVE });
+
+        const response = await request(server)
+          .get('/settings/users/')
+          .query({ limit: 20, page: 1, filterStatus: UserStatus.INACTIVE })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.users).toHaveLength(1);
+        expect(response.body.users[0].status).toBe(UserStatus.INACTIVE);
       });
     });
 
@@ -331,8 +691,8 @@ describe('/settings', () => {
   });
 
   describe('/groups', () => {
-    describe('GET /', () => {
-      it('returns users associated with a company if user is organization owner', async () => {
+    describe.only('GET /', () => {
+      it('returns groups associated with an organization if user is organization owner', async () => {
         const { id: organizationId } = await createOrganization();
         const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
         await createGroups({ userId, organizationId, count: 2 });
@@ -347,7 +707,7 @@ describe('/settings', () => {
         expect(response.body.groups).toHaveLength(2);
       });
 
-      it('returns users associated with a company if user is organization admin', async () => {
+      it('returns groups associated with  an organization if user is organization admin', async () => {
         const { id: organizationId } = await createOrganization();
         const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.ADMIN });
         await createGroups({ userId, organizationId, count: 2 });
@@ -376,7 +736,7 @@ describe('/settings', () => {
         expect(response.body.groups).toBeUndefined();
       });
 
-      it('returns paginated users', async () => {
+      it('returns paginated groups', async () => {
         const { id: organizationId } = await createOrganization();
         const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
         await createGroups({ userId, organizationId, count: 50 });
@@ -391,6 +751,106 @@ describe('/settings', () => {
         expect(response.body.pagination.totalDocuments).toBe(50);
         expect(response.body.pagination.currentPage).toBe(1);
         expect(response.body.pagination.totalPages).toBe(3);
+      });
+
+      it('returns groups associated with an organization sorted by name asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createGroups({ userId, organizationId, count: 3 });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1, sortName: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const groups = (await Group.find({})).map((group) => group.name).sort();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(3);
+        expect(response.body.groups[0].name).toBe(groups[0]);
+        expect(response.body.groups[1].name).toBe(groups[1]);
+        expect(response.body.groups[2].name).toBe(groups[2]);
+      });
+
+      it('returns groups associated with an organization sorted by name desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        await createGroups({ userId, organizationId, count: 3 });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1, sortName: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        const groups = (await Group.find({}))
+          .map((group) => group.name)
+          .sort()
+          .reverse();
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(3);
+        expect(response.body.groups[0].name).toBe(groups[0]);
+        expect(response.body.groups[1].name).toBe(groups[1]);
+        expect(response.body.groups[2].name).toBe(groups[2]);
+      });
+
+      it('returns groups associated with an organization sorted by users asc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const groups = await createGroups({ userId, organizationId, count: 2 });
+        const users = await createUsers({ organizationId, count: 2 });
+        await createGroupUser({ userId: users[0].id, groupId: groups[0].id });
+        await createGroupUser({ userId: users[1].id, groupId: groups[0].id });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1, sortUsers: 1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(2);
+        expect(response.body.groups[0].users).toBe(1);
+        expect(response.body.groups[1].users).toBe(3);
+      });
+
+      it('returns groups associated with an organization sorted by users desc', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const groups = await createGroups({ userId, organizationId, count: 2 });
+        const users = await createUsers({ organizationId, count: 2 });
+        await createGroupUser({ userId: users[0].id, groupId: groups[0].id });
+        await createGroupUser({ userId: users[1].id, groupId: groups[0].id });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1, sortUsers: -1 })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(2);
+        expect(response.body.groups[0].users).toBe(3);
+        expect(response.body.groups[1].users).toBe(1);
+      });
+
+      it.only('returns groups associated with an organization filtered by firstName', async () => {
+        const { id: organizationId } = await createOrganization();
+        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
+        const { id: userId } = await createUser({ organizationId });
+        const group = await createGroup({ userId, organizationId });
+
+        const response = await request(server)
+          .get('/settings/groups/')
+          .query({ limit: 20, page: 1, filterName: group?.name.slice(1, 3) })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.groups).toHaveLength(1);
+        expect(response.body.groups[0].name).toBe(group?.name);
       });
     });
 

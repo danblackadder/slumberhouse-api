@@ -21,7 +21,7 @@ export const createUser = async ({
   email = faker.internet.email().toLowerCase(),
   password = faker.internet.password(),
   role = OrganizationRole.BASIC,
-  status = [UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.INVITED].sort(() => 0.5 - Math.random()).slice(0, 1)[0],
+  status = UserStatus.ACTIVE,
 }: {
   organizationId: string;
   email?: string;
@@ -32,8 +32,8 @@ export const createUser = async ({
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName(),
+    firstName: faker.name.firstName().toLowerCase(),
+    lastName: faker.name.lastName().toLowerCase(),
     email,
     password: hashedPassword,
   });
@@ -54,7 +54,7 @@ export const createUser = async ({
 };
 
 export const createOrganization = async () => {
-  const organization = await Organization.create({ name: faker.company.name() });
+  const organization = await Organization.create({ name: faker.company.name().toLowerCase() });
 
   return {
     id: organization._id.toString(),
@@ -90,7 +90,7 @@ export const createGroup = async ({
   role?: GroupRole;
 }) => {
   const group = await Group.create({
-    name: faker.name.jobArea(),
+    name: faker.name.jobArea().toLowerCase(),
     description: faker.lorem.paragraph(),
     image: faker.image.business(640, 480, true),
   });

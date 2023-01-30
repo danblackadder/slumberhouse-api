@@ -34,7 +34,7 @@ export const authValidation = async ({
       errors.firstName.push('First name must be longer than 2 characters');
     }
 
-    firstName = validator.escape(firstName);
+    firstName = validator.escape(firstName).toLowerCase();
   }
 
   if (!lastName) {
@@ -44,7 +44,7 @@ export const authValidation = async ({
       errors.lastName.push('Last name must be longer than 2 characters');
     }
 
-    lastName = validator.escape(lastName);
+    lastName = validator.escape(lastName).toLowerCase();
   }
 
   if (!email) {
@@ -64,7 +64,7 @@ export const authValidation = async ({
       errors.organization.push('Organization must be longer than 2 characters');
     }
 
-    organization = validator.escape(organization);
+    organization = validator.escape(organization).toLowerCase();
   }
 
   if (!password) {

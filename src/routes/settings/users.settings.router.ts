@@ -1,9 +1,10 @@
 import express, { Request, Response } from 'express';
-import mongoose from 'mongoose';
 
 import { OrganizationUsers, User } from '../../models';
 import { OrganizationRole } from '../../types/roles.types';
+import { IGetSettingsUserFilter, IGetSettingsUserSort } from '../../types/settings.types';
 import { UserStatus } from '../../types/user.types';
+import { userSettingAggregate } from '../../utility/aggregates/settings/user.settings.aggregates';
 import { userPostValidation, userPutValidation } from '../../utility/validation/user.validation';
 
 const router = express.Router();
@@ -11,41 +12,41 @@ const router = express.Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    const id = new mongoose.Types.ObjectId(token.userId);
     const limit = Number(req.query.limit) || 10;
     const currentPage = Number(req.query.page) || 1;
+    const sort = {
+      name: Number(req.query.sortName) || 0,
+      email: Number(req.query.sortEmail) || 0,
+      role: Number(req.query.sortRole) || 0,
+      status: Number(req.query.sortStatus) || 0,
+    } as IGetSettingsUserSort;
+    const filter = {
+      nameEmail: req.query.filterNameEmail,
+      role: req.query.filterRole,
+      status: req.query.filterStatus,
+    } as IGetSettingsUserFilter;
 
-    const user = await OrganizationUsers.findOne({ userId: id });
-    const aggregate = await OrganizationUsers.aggregate([
-      { $match: { organizationId: user?.organizationId } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      { $unwind: '$user' },
-      {
-        $project: {
-          _id: '$user._id',
-          role: '$role',
-          status: '$status',
-          firstName: '$user.firstName',
-          lastName: '$user.lastName',
-          email: '$user.email',
-        },
-      },
-      { $skip: limit * (currentPage - 1) },
-      { $limit: limit },
-    ]);
+    const aggregate = await OrganizationUsers.aggregate(
+      await userSettingAggregate({ userId: token.userId, sort, filter, limit, currentPage })
+    );
 
-    const totalDocuments = await OrganizationUsers.countDocuments({ organizationId: user?.organizationId });
+    const totalAggregate = await OrganizationUsers.aggregate(
+      await userSettingAggregate({ userId: token.userId, sort, filter, count: true })
+    );
+
+    let totalDocuments = 0;
+    if (totalAggregate[0]?.totalDocuments > 0) {
+      totalDocuments = totalAggregate[0].totalDocuments;
+    }
 
     res.status(200).send({
       users: aggregate,
-      pagination: { totalDocuments, totalPages: Math.ceil(totalDocuments / limit), currentPage, limit },
+      pagination: {
+        totalDocuments: totalDocuments,
+        totalPages: Math.ceil(totalDocuments / limit),
+        currentPage,
+        limit,
+      },
     });
     return;
   } catch (err: unknown) {
