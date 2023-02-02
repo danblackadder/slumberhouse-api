@@ -15,3 +15,14 @@ export interface IGroupUserPutErrors {
   role: string[];
   group: string[];
 }
+
+export interface IGetGroupUserSort {
+  name: number;
+  email: number;
+  role: number;
+}
+
+export interface IGetGroupUserFilter {
+  nameEmail: string;
+  role: string;
+}

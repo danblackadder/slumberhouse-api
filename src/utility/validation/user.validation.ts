@@ -17,7 +17,7 @@ export const userPostValidation = async ({ email }: { email?: string }) => {
       errors.email.push('Email must be a valid email address');
     }
 
-    email = validator.escape(email);
+    email = email.toLowerCase();
   }
 
   if ((await User.find({ email })).length > 0) {

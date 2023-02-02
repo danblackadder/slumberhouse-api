@@ -24,7 +24,7 @@ export const permissions = {
       }
 
       next();
-    } catch (err) {
+    } catch (err: unknown) {
       res.status(401).send({ error: 'Invalid token' });
     }
   },
@@ -41,7 +41,7 @@ export const permissions = {
       }
 
       next();
-    } catch (err) {
+    } catch (err: unknown) {
       res.status(401).send({ error: 'Invalid token' });
     }
   },
@@ -64,7 +64,25 @@ export const permissions = {
       }
 
       next();
-    } catch (err) {
+    } catch (err: unknown) {
+      res.status(401).send({ error: 'Invalid token' });
+    }
+  },
+
+  groupUser: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.body.token;
+      const groupId = new mongoose.Types.ObjectId(req.params.groupId);
+
+      const groupUser = await GroupUsers.findOne({ groupId, userId });
+
+      if (!groupUser) {
+        unauthorized(res);
+        return;
+      }
+
+      next();
+    } catch (err: unknown) {
       res.status(401).send({ error: 'Invalid token' });
     }
   },

@@ -1,21 +1,25 @@
-import Group, { GroupSchemaType } from './Group.model';
-import GroupUsers, { GroupUsersSchemaType } from './GroupUsers.model';
-import Organization, { OrganizationSchemaType } from './Organization';
-import OrganizationGroup, { OrganizationGroupsSchemaType } from './OrganizationGroups.model';
-import OrganizationUsers, { OrganizationUsersSchemaType } from './OrganizationUsers.model';
-import User, { UserSchemaType } from './User.model';
+import Group from './Group.model';
+import GroupTags from './GroupTags.model';
+import GroupTasks from './GroupTasks.model';
+import GroupUsers from './GroupUsers.model';
+import Organization from './Organization.model';
+import OrganizationGroup from './OrganizationGroups.model';
+import OrganizationUsers from './OrganizationUsers.model';
+import Task from './Task.model';
+import TaskTags from './TaskTags.model';
+import TaskUsers from './TaskUsers.model';
+import User from './User.model';
 
 export {
   Group,
-  GroupSchemaType,
+  GroupTags,
+  GroupTasks,
   GroupUsers,
-  GroupUsersSchemaType,
   Organization,
   OrganizationGroup,
-  OrganizationGroupsSchemaType,
-  OrganizationSchemaType,
   OrganizationUsers,
-  OrganizationUsersSchemaType,
+  Task,
+  TaskTags,
+  TaskUsers,
   User,
-  UserSchemaType,
 };

@@ -2,10 +2,9 @@ import mongoose from 'mongoose';
 
 const schema = new mongoose.Schema(
   {
-    organizationId: {
-      type: mongoose.Schema.Types.ObjectId,
+    tag: {
+      type: String,
       required: true,
-      ref: 'Organization',
     },
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -16,9 +15,9 @@ const schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export interface OrganizationGroupsSchemaType {
-  organizationId: mongoose.Types.ObjectId;
+export interface GroupTagSchemaType {
+  tag: string;
   groupId: mongoose.Types.ObjectId;
 }
 
-export default mongoose.model<OrganizationGroupsSchemaType>('OrganizationGroups', schema);
+export default mongoose.model<GroupTagSchemaType>('GroupTag', schema);

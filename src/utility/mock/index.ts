@@ -1,9 +1,23 @@
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
-import { Group, GroupUsers, Organization, OrganizationGroup, OrganizationUsers, User } from '../../models';
+import {
+  Group,
+  GroupTags,
+  GroupUsers,
+  Organization,
+  OrganizationGroup,
+  OrganizationUsers,
+  Task,
+  TaskTags,
+  TaskUsers,
+  User,
+} from '../../models';
+import GroupTasks from '../../models/GroupTasks.model';
 import { GroupRole, OrganizationRole } from '../../types/roles.types';
+import { TaskPriority, TaskStatus } from '../../types/task.types';
 import { UserStatus } from '../../types/user.types';
 
 export const createUsers = async ({ organizationId, count }: { organizationId: string; count: number }) => {
@@ -47,7 +61,10 @@ export const createUser = async ({
 
   return {
     id: user._id.toString(),
-    token: jwt.sign({ userId: user._id, organizationId }, process.env.JWT_SECRET as string),
+    token: jwt.sign(
+      { userId: user._id, organizationId: new mongoose.Types.ObjectId(organizationId) },
+      process.env.JWT_SECRET as string
+    ),
     email,
     password,
   };
@@ -124,4 +141,49 @@ export const createGroupUser = async ({
   });
 
   return groupUser;
+};
+
+export const createTask = async ({ groupId }: { groupId: string }) => {
+  const task = await Task.create({
+    title: faker.lorem.sentence(),
+    status: TaskStatus.DRAFT,
+    description: faker.lorem.paragraph(),
+    priority: TaskPriority.LOW,
+    due: new Date(),
+  });
+  await GroupTasks.create({ groupId, taskId: task._id });
+
+  return {
+    id: task._id.toString(),
+  };
+};
+
+export const createTasks = async ({ groupId, count }: { groupId: string; count: number }) => {
+  const tasks = [];
+  for (let i = 0; i < count; i++) {
+    const task = await createTask({ groupId });
+    tasks.push({ id: task.id });
+  }
+
+  return tasks;
+};
+
+export const createTags = async ({ groupId, taskId, count }: { groupId: string; taskId: string; count: number }) => {
+  const tags = [];
+  for (let i = 0; i < count; i++) {
+    const tag = await GroupTags.create({ tag: faker.lorem.word().toLowerCase(), groupId });
+    await TaskTags.create({ taskId, tagId: tag._id });
+
+    tags.push({ id: tag._id.toString(), tag: tag.tag });
+  }
+
+  return tags;
+};
+
+export const createTaskUser = async ({ userId, taskId }: { userId: string; taskId: string }) => {
+  const taskUser = await TaskUsers.create({ userId, taskId });
+
+  return {
+    id: taskUser._id.toString(),
+  };
 };

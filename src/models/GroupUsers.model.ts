@@ -25,8 +25,8 @@ const schema = new mongoose.Schema(
 
 export interface GroupUsersSchemaType {
   role: GroupRole;
-  userId: mongoose.Schema.Types.ObjectId;
-  groupId: mongoose.Schema.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  groupId: mongoose.Types.ObjectId;
 }
 
 export default mongoose.model<GroupUsersSchemaType>('GroupUsers', schema);

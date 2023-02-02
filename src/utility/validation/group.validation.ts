@@ -85,11 +85,11 @@ export const groupPutValidation = async ({
       errors.name.push('Name must be longer than 2 characters');
     }
 
-    name = validator.escape(name);
+    name = name.toLowerCase();
   }
 
   if (description) {
-    description = validator.escape(description);
+    description = description;
   }
 
   if (image) {

@@ -4,7 +4,16 @@ import '../database';
 
 import { OrganizationRole } from '../types/roles.types';
 import { UserStatus } from '../types/user.types';
-import { createGroups, createOrganization, createUser, createUsers } from '../utility/mock';
+import { randomNumber, shuffleArray } from '../utility';
+import {
+  createGroups,
+  createOrganization,
+  createTags,
+  createTasks,
+  createTaskUser,
+  createUser,
+  createUsers,
+} from '../utility/mock';
 
 try {
   (async () => {
@@ -34,8 +43,20 @@ try {
       status: UserStatus.ACTIVE,
     });
 
-    await createUsers({ organizationId, count: 50 });
-    await createGroups({ userId, organizationId, count: 10 });
+    const users = await createUsers({ organizationId, count: 50 });
+    const groups = await createGroups({ userId, organizationId, count: 10 });
+    for (const group of groups) {
+      const tasks = await createTasks({ groupId: group.id, count: randomNumber(10) });
+
+      for (const task of tasks) {
+        await createTags({ groupId: group.id, taskId: task.id, count: randomNumber(3) });
+
+        const randomUsers = shuffleArray(users.map((user) => user.id)).slice(0, randomNumber(10));
+        for (const userId of randomUsers) {
+          await createTaskUser({ taskId: task.id, userId });
+        }
+      }
+    }
 
     console.log(`Owner account:\nEmail: ${ownerEmail}\n`);
     console.log(`Admin account:\nEmail: ${adminEmail}\n`);

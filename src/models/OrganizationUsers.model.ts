@@ -32,8 +32,8 @@ const schema = new mongoose.Schema(
 export interface OrganizationUsersSchemaType {
   role: OrganizationRole;
   status: UserStatus;
-  userId: mongoose.Schema.Types.ObjectId;
-  organizationId: mongoose.Schema.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  organizationId: mongoose.Types.ObjectId;
 }
 
 export default mongoose.model<OrganizationUsersSchemaType>('OrganizationUsers', schema);

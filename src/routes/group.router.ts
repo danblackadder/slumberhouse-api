@@ -3,7 +3,13 @@ import mongoose from 'mongoose';
 
 import { permissions } from '../middleware/permissions.middleware';
 import { GroupUsers, OrganizationUsers } from '../models';
+import { IGetGroupUserFilter, IGetGroupUserSort } from '../types/group.types';
 import { GroupRole } from '../types/roles.types';
+import {
+  groupAggregate,
+  groupUsersAggregate,
+  groupUsersAvailableAggregate,
+} from '../utility/aggregates/group.aggregates';
 import { groupUserPutValidation } from '../utility/validation/group.validation';
 
 const router = express.Router();
@@ -11,38 +17,8 @@ const router = express.Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    const id = new mongoose.Types.ObjectId(token.userId);
-
-    const groups = await GroupUsers.aggregate([
-      { $match: { userId: id } },
-      {
-        $lookup: {
-          from: 'groups',
-          localField: 'groupId',
-          foreignField: '_id',
-          as: 'group',
-        },
-      },
-      { $unwind: '$group' },
-      {
-        $lookup: {
-          from: 'groupusers',
-          localField: 'groupId',
-          foreignField: 'groupId',
-          as: 'users',
-        },
-      },
-      {
-        $project: {
-          _id: '$group._id',
-          name: '$group.name',
-          description: '$group.description',
-          image: '$group.image',
-          role: '$role',
-          users: { $size: '$users' },
-        },
-      },
-    ]);
+    const userId = new mongoose.Types.ObjectId(token.userId);
+    const groups = await GroupUsers.aggregate(await groupAggregate({ userId }));
 
     res.status(200).send(groups);
     return;
@@ -58,32 +34,28 @@ router.get('/:id/users', permissions.groupAdmin, async (req: Request, res: Respo
     const groupId = new mongoose.Types.ObjectId(req.params.id);
     const limit = Number(req.query.limit) || 10;
     const currentPage = Number(req.query.page) || 1;
+    const sort = {
+      name: Number(req.query.sortName) || 0,
+      email: Number(req.query.sortEmail) || 0,
+      role: Number(req.query.sortRole) || 0,
+    } as IGetGroupUserSort;
+    const filter = {
+      nameEmail: req.query.filterNameEmail,
+      role: req.query.filterRole,
+    } as IGetGroupUserFilter;
 
-    const aggregate = await GroupUsers.aggregate([
-      { $match: { groupId } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'users',
-        },
-      },
-      { $unwind: '$users' },
-      {
-        $project: {
-          _id: '$users._id',
-          firstName: '$users.firstName',
-          lastName: '$users.lastName',
-          email: '$users.email',
-          role: '$role',
-        },
-      },
-      { $skip: limit * (currentPage - 1) },
-      { $limit: limit },
-    ]);
+    const aggregate = await GroupUsers.aggregate(
+      await groupUsersAggregate({ groupId, sort, filter, limit, currentPage })
+    );
 
-    const totalDocuments = await GroupUsers.countDocuments({ groupId });
+    const totalAggregate = await GroupUsers.aggregate(
+      await groupUsersAggregate({ groupId, sort, filter, count: true })
+    );
+
+    let totalDocuments = 0;
+    if (totalAggregate[0]?.totalDocuments > 0) {
+      totalDocuments = totalAggregate[0].totalDocuments;
+    }
 
     res.status(200).send({
       users: aggregate,
@@ -103,35 +75,7 @@ router.get('/:id/users/available', permissions.groupAdmin, async (req: Request, 
     const organizationId = new mongoose.Types.ObjectId(token.organizationId);
     const groupId = new mongoose.Types.ObjectId(req.params.id);
 
-    const users = await OrganizationUsers.aggregate([
-      { $match: { organizationId } },
-      {
-        $lookup: {
-          from: 'groupusers',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'groupusers',
-        },
-      },
-      { $match: { $or: [{ groupusers: [] }, { groupusers: { $not: { $elemMatch: { groupId } } } }] } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'users',
-        },
-      },
-      { $unwind: '$users' },
-      {
-        $project: {
-          _id: '$users._id',
-          firstName: '$users.firstName',
-          lastName: '$users.lastName',
-          email: '$users.email',
-        },
-      },
-    ]);
+    const users = await OrganizationUsers.aggregate(await groupUsersAvailableAggregate({ organizationId, groupId }));
 
     res.status(200).send(users);
     return;

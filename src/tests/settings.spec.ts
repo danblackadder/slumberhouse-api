@@ -85,14 +85,14 @@ describe('/settings', () => {
         expect(response.body.pagination.totalPages).toBe(3);
       });
 
-      it('returns users associated with a company sorted by first name asc', async () => {
+      it('returns users associated with a company sorted by name asc', async () => {
         const { id: organizationId } = await createOrganization();
         const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
         await createUsers({ organizationId, count: 2 });
 
         const response = await request(server)
           .get('/settings/users/')
-          .query({ limit: 20, page: 1, sortFirstName: 1 })
+          .query({ limit: 20, page: 1, sortName: 1 })
           .set('Authorization', `Bearer ${token}`);
 
         const users = (await User.find({})).map((user) => user.firstName).sort();
@@ -105,14 +105,14 @@ describe('/settings', () => {
         expect(response.body.users[2].firstName).toBe(users[2]);
       });
 
-      it('returns users associated with a company sorted by first name desc', async () => {
+      it('returns users associated with a company sorted by name desc', async () => {
         const { id: organizationId } = await createOrganization();
         const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
         await createUsers({ organizationId, count: 2 });
 
         const response = await request(server)
           .get('/settings/users/')
-          .query({ limit: 20, page: 1, sortFirstName: -1 })
+          .query({ limit: 20, page: 1, sortName: -1 })
           .set('Authorization', `Bearer ${token}`);
 
         const users = (await User.find({}))
@@ -126,49 +126,6 @@ describe('/settings', () => {
         expect(response.body.users[0].firstName).toBe(users[0]);
         expect(response.body.users[1].firstName).toBe(users[1]);
         expect(response.body.users[2].firstName).toBe(users[2]);
-      });
-
-      it('returns users associated with a company sorted by last name asc', async () => {
-        const { id: organizationId } = await createOrganization();
-        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
-        await createUsers({ organizationId, count: 2 });
-
-        const response = await request(server)
-          .get('/settings/users/')
-          .query({ limit: 20, page: 1, sortLastName: 1 })
-          .set('Authorization', `Bearer ${token}`);
-
-        const users = (await User.find({})).map((user) => user.lastName).sort();
-
-        expect(response.status).toBe(200);
-        expect(response.body.errors).toBeUndefined();
-        expect(response.body.users).toHaveLength(3);
-        expect(response.body.users[0].lastName).toBe(users[0]);
-        expect(response.body.users[1].lastName).toBe(users[1]);
-        expect(response.body.users[2].lastName).toBe(users[2]);
-      });
-
-      it('returns users associated with a company sorted by last name desc', async () => {
-        const { id: organizationId } = await createOrganization();
-        const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
-        await createUsers({ organizationId, count: 2 });
-
-        const response = await request(server)
-          .get('/settings/users/')
-          .query({ limit: 20, page: 1, sortLastName: -1 })
-          .set('Authorization', `Bearer ${token}`);
-
-        const users = (await User.find({}))
-          .map((user) => user.lastName)
-          .sort()
-          .reverse();
-
-        expect(response.status).toBe(200);
-        expect(response.body.errors).toBeUndefined();
-        expect(response.body.users).toHaveLength(3);
-        expect(response.body.users[0].lastName).toBe(users[0]);
-        expect(response.body.users[1].lastName).toBe(users[1]);
-        expect(response.body.users[2].lastName).toBe(users[2]);
       });
 
       it('returns users associated with a company sorted by email asc', async () => {
@@ -298,7 +255,7 @@ describe('/settings', () => {
 
         const response = await request(server)
           .get('/settings/users/')
-          .query({ limit: 20, page: 1, filterNameEmail: user?.firstName.slice(1, 3) })
+          .query({ limit: 20, page: 1, filterNameEmail: user?.firstName })
           .set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(200);
@@ -315,7 +272,7 @@ describe('/settings', () => {
 
         const response = await request(server)
           .get('/settings/users/')
-          .query({ limit: 20, page: 1, filterNameEmail: user?.lastName.slice(1, 3) })
+          .query({ limit: 20, page: 1, filterNameEmail: user?.lastName })
           .set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(200);
@@ -332,7 +289,7 @@ describe('/settings', () => {
 
         const response = await request(server)
           .get('/settings/users/')
-          .query({ limit: 20, page: 1, filterNameEmail: user?.email.slice(1, 3) })
+          .query({ limit: 20, page: 1, filterNameEmail: user?.email })
           .set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(200);
@@ -449,7 +406,7 @@ describe('/settings', () => {
           .send({ email })
           .set('Authorization', `Bearer ${token}`);
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
         const organizationUser = await OrganizationUsers.findOne({ userId: user?._id });
 
         expect(response.status).toBe(200);
@@ -468,7 +425,7 @@ describe('/settings', () => {
           .send({ email })
           .set('Authorization', `Bearer ${token}`);
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
         const organizationUser = await OrganizationUsers.findOne({ userId: user?._id });
 
         expect(response.status).toBe(200);
@@ -519,7 +476,7 @@ describe('/settings', () => {
         const { id: organizationId } = await createOrganization();
         const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
 
-        const email = faker.internet.email();
+        const email = faker.internet.email().toLowerCase();
         await createUser({ organizationId, email });
 
         const response = await request(server)
@@ -691,7 +648,7 @@ describe('/settings', () => {
   });
 
   describe('/groups', () => {
-    describe.only('GET /', () => {
+    describe('GET /', () => {
       it('returns groups associated with an organization if user is organization owner', async () => {
         const { id: organizationId } = await createOrganization();
         const { token, id: userId } = await createUser({ organizationId, role: OrganizationRole.OWNER });
@@ -836,7 +793,7 @@ describe('/settings', () => {
         expect(response.body.groups[1].users).toBe(1);
       });
 
-      it.only('returns groups associated with an organization filtered by firstName', async () => {
+      it('returns groups associated with an organization filtered by firstName', async () => {
         const { id: organizationId } = await createOrganization();
         const { token } = await createUser({ organizationId, role: OrganizationRole.OWNER });
         const { id: userId } = await createUser({ organizationId });
@@ -844,7 +801,7 @@ describe('/settings', () => {
 
         const response = await request(server)
           .get('/settings/groups/')
-          .query({ limit: 20, page: 1, filterName: group?.name.slice(1, 3) })
+          .query({ limit: 20, page: 1, filterName: group?.name })
           .set('Authorization', `Bearer ${token}`);
 
         expect(response.status).toBe(200);

@@ -15,11 +15,11 @@ describe('/authentication', () => {
 
   describe('POST /register', () => {
     it('successfully registers new user', async () => {
-      const firstName = faker.name.firstName();
-      const lastName = faker.name.lastName();
-      const email = faker.internet.email();
+      const firstName = faker.name.firstName().toLowerCase();
+      const lastName = faker.name.lastName().toLowerCase();
+      const email = faker.internet.email().toLowerCase();
       const password = faker.internet.password(16, false, /[a-zA-Z0-9]/);
-      const organizationName = faker.company.name();
+      const organizationName = faker.company.name().toLowerCase();
 
       const response = await request(server).post('/authentication/register').send({
         firstName,
@@ -30,7 +30,7 @@ describe('/authentication', () => {
         organization: organizationName,
       });
 
-      const user = await User.findOne({ email: email.toLowerCase() });
+      const user = await User.findOne({ email: email });
       const organization = await Organization.findOne({ name: organizationName });
       const organizationUser = await OrganizationUsers.find({
         userId: user?._id,
@@ -41,7 +41,7 @@ describe('/authentication', () => {
       expect(response.body.errors).toBeUndefined();
       expect(user?.firstName).toBe(firstName);
       expect(user?.lastName).toBe(lastName);
-      expect(user?.email).toBe(email.toLowerCase());
+      expect(user?.email).toBe(email);
       expect(organization?.name).toBe(organizationName);
       expect(organizationUser).toBeDefined();
     });
