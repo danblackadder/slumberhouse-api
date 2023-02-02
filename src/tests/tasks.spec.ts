@@ -1,23 +1,23 @@
 import request from 'supertest';
+import { faker } from '@faker-js/faker';
 
 import 'dotenv/config';
 
+import { GroupTags, GroupTasks, Task, TaskUsers } from '../models';
 import server from '../server';
+import { TaskPriority, TaskStatus } from '../types/task.types';
 import {
   createGroup,
   createOrganization,
-  createTasks,
-  createTask,
-  createUser,
   createTags,
+  createTask,
+  createTasks,
   createTaskUser,
+  createUser,
   createUsers,
 } from '../utility/mock';
 
 import { database } from './config';
-import { GroupTags, GroupTasks, Task, TaskUsers } from '../models';
-import { faker } from '@faker-js/faker';
-import { TaskPriority, TaskStatus } from '../types/task.types';
 
 describe('/tasks', () => {
   database('slumberhouse-test', server);
@@ -215,7 +215,7 @@ describe('/tasks', () => {
         .send({ title, status, tags })
         .set('Authorization', `Bearer ${token}`);
 
-      let groupTags = [] as string[];
+      const groupTags = [] as string[];
       for (const tag of tags) {
         const groupTag = await GroupTags.findOne({ groupId, tag });
         if (groupTag) {

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 import { TaskPriority, TaskStatus } from '../types/task.types';
 
 const schema = new mongoose.Schema(

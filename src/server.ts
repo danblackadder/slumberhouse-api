@@ -1,10 +1,10 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
+import mongoSanitize from 'express-mongo-sanitize';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import http from 'http';
 import path from 'path';
-import mongoSanitize from 'express-mongo-sanitize';
 
 import 'dotenv/config';
 

@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
+
 import { permissions } from '../middleware/permissions.middleware';
 import { GroupTags, Task, TaskTags, TaskUsers } from '../models';
 import GroupTasks from '../models/GroupTasks.model';
@@ -40,7 +41,7 @@ router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Respo
       return;
     }
 
-    let tagIds = [] as mongoose.Types.ObjectId[];
+    const tagIds = [] as mongoose.Types.ObjectId[];
 
     if (tags) {
       for (const tag of tags) {
