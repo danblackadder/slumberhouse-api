@@ -1,7 +1,7 @@
 import { Request } from 'express';
 
 export const getToken = (req: Request) => {
-  return req.header('Authorization')?.replace('Bearer ', '') || req.headers.cookie?.replace('token=', '');
+  return req.header('Authorization')?.replace('Bearer ', '') || req.cookies.token;
 };
 
 export const shuffleArray = (array: string[]) => {

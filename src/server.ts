@@ -2,6 +2,7 @@ import express from 'express';
 import fileUpload from 'express-fileupload';
 import mongoSanitize from 'express-mongo-sanitize';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import http from 'http';
 import { AddressInfo } from 'net';
@@ -21,6 +22,7 @@ app.use(
     origin: true,
   })
 );
+app.use(cookieParser());
 app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
