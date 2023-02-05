@@ -3,7 +3,49 @@ import mongoose, { PipelineStage } from 'mongoose';
 import { IGetGroupUserFilter, IGetGroupUserSort } from '../../types/group.types';
 import { OrganizationRole } from '../../types/roles.types';
 
-export const groupAggregate = async ({ userId }: { userId: mongoose.Types.ObjectId }) => {
+export const groupAggregate = async ({
+  userId,
+  groupId,
+}: {
+  userId: mongoose.Types.ObjectId;
+  groupId: mongoose.Types.ObjectId;
+}) => {
+  const aggregate = [] as PipelineStage[];
+  aggregate.push(
+    { $match: { userId, groupId } },
+    {
+      $lookup: {
+        from: 'groups',
+        localField: 'groupId',
+        foreignField: '_id',
+        as: 'group',
+      },
+    },
+    { $unwind: '$group' },
+    {
+      $lookup: {
+        from: 'groupusers',
+        localField: 'groupId',
+        foreignField: 'groupId',
+        as: 'users',
+      },
+    },
+    {
+      $project: {
+        _id: '$group._id',
+        name: '$group.name',
+        description: '$group.description',
+        image: '$group.image',
+        role: '$role',
+        users: { $size: '$users' },
+      },
+    }
+  );
+
+  return aggregate;
+};
+
+export const groupsAggregate = async ({ userId }: { userId: mongoose.Types.ObjectId }) => {
   const aggregate = [] as PipelineStage[];
   aggregate.push(
     { $match: { userId } },

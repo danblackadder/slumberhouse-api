@@ -71,12 +71,17 @@ export const permissions = {
 
   groupUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId } = req.body.token;
+      const { organizationId, userId } = req.body.token;
       const groupId = new mongoose.Types.ObjectId(req.params.groupId);
 
       const groupUser = await GroupUsers.findOne({ groupId, userId });
+      const organizationUser = await OrganizationUsers.findOne({ organizationId, userId });
 
-      if (!groupUser) {
+      if (
+        !groupUser &&
+        organizationUser?.role !== OrganizationRole.OWNER &&
+        organizationUser?.role !== OrganizationRole.ADMIN
+      ) {
         unauthorized(res);
         return;
       }

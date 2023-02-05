@@ -1,11 +1,12 @@
 import request from 'supertest';
 import { faker } from '@faker-js/faker';
+import EventSource from 'eventsource';
 
 import 'dotenv/config';
 
 import { GroupTags, GroupTasks, Task, TaskUsers } from '../models';
-import server from '../server';
-import { TaskPriority, TaskStatus } from '../types/task.types';
+import server, { url } from '../server';
+import { IEventSourceTask, TaskPriority, TaskStatus } from '../types/task.types';
 import {
   createGroup,
   createOrganization,
@@ -29,10 +30,23 @@ describe('/tasks', () => {
       const { id: groupId } = await createGroup({ userId, organizationId });
       await createTasks({ groupId, count: 2 });
 
-      const response = await request(server).get(`/tasks/${groupId}`).set('Authorization', `Bearer ${token}`);
+      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
-      expect(response.status).toBe(200);
+      const response = await new Promise<IEventSourceTask>((resolve, reject) => {
+        source.onmessage = (e) => {
+          source.close();
+          resolve({ body: JSON.parse(e.data) });
+        };
+
+        source.onerror = function (err) {
+          source.close();
+          reject({ error: err });
+        };
+      });
+
       expect(response.body).toHaveLength(2);
+      expect(response.error).toBeUndefined();
     });
 
     it('returns tags associated with tasks', async () => {
@@ -42,9 +56,21 @@ describe('/tasks', () => {
       const { id: taskId } = await createTask({ groupId });
       const tags = await createTags({ groupId, taskId, count: 2 });
 
-      const response = await request(server).get(`/tasks/${groupId}`).set('Authorization', `Bearer ${token}`);
+      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
-      expect(response.status).toBe(200);
+      const response = await new Promise<IEventSourceTask>((resolve, reject) => {
+        source.onmessage = (e) => {
+          source.close();
+          resolve({ body: JSON.parse(e.data) });
+        };
+
+        source.onerror = function (err) {
+          source.close();
+          reject({ error: err });
+        };
+      });
+
       expect(response.body).toHaveLength(1);
       expect(response.body[0].tags).toContain(tags[0].tag);
       expect(response.body[0].tags).toContain(tags[1].tag);
@@ -57,9 +83,21 @@ describe('/tasks', () => {
       const { id: taskId } = await createTask({ groupId });
       await createTaskUser({ userId, taskId });
 
-      const response = await request(server).get(`/tasks/${groupId}`).set('Authorization', `Bearer ${token}`);
+      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
-      expect(response.status).toBe(200);
+      const response = await new Promise<IEventSourceTask>((resolve, reject) => {
+        source.onmessage = (e) => {
+          source.close();
+          resolve({ body: JSON.parse(e.data) });
+        };
+
+        source.onerror = function (err) {
+          source.close();
+          reject({ error: err });
+        };
+      });
+
       expect(response.body).toHaveLength(1);
       expect(response.body[0].users).toHaveLength(1);
       expect(response.body[0].users[0].email).toBe(email);
@@ -273,6 +311,55 @@ describe('/tasks', () => {
       expect(taskUsers).toHaveLength(2);
       expect(taskUsers[0].userId.toString()).toBe(users[0].id);
       expect(taskUsers[1].userId.toString()).toBe(users[1].id);
+    });
+  });
+
+  describe('GET /:$groupId EventSource update', () => {
+    it('returns updated tasks associated with group id on successful POST', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+      const { id: groupId } = await createGroup({ userId, organizationId });
+      await createTasks({ groupId, count: 2 });
+
+      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
+
+      const responseSource = await new Promise<IEventSourceTask>((resolve, reject) => {
+        source.onmessage = (e) => {
+          resolve({ body: JSON.parse(e.data) });
+        };
+
+        source.onerror = function (err) {
+          reject({ error: err });
+        };
+      });
+
+      expect(responseSource.body).toHaveLength(2);
+      expect(responseSource.error).toBeUndefined();
+
+      const title = faker.lorem.sentence();
+      const status = TaskStatus.DRAFT;
+
+      const responsePost = await request(server)
+        .post(`/tasks/${groupId}`)
+        .send({ title, status })
+        .set('Authorization', `Bearer ${token}`);
+
+      const responseSourcePost = await new Promise<IEventSourceTask>((resolve, reject) => {
+        source.onmessage = (e) => {
+          source.close();
+          resolve({ body: JSON.parse(e.data) });
+        };
+
+        source.onerror = function (err) {
+          source.close();
+          reject({ error: err });
+        };
+      });
+
+      expect(responsePost.status).toBe(200);
+      expect(responseSourcePost.body).toHaveLength(3);
+      expect(responseSourcePost.error).toBeUndefined();
     });
   });
 });

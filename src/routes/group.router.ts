@@ -7,6 +7,7 @@ import { IGetGroupUserFilter, IGetGroupUserSort } from '../types/group.types';
 import { GroupRole } from '../types/roles.types';
 import {
   groupAggregate,
+  groupsAggregate,
   groupUsersAggregate,
   groupUsersAvailableAggregate,
 } from '../utility/aggregates/group.aggregates';
@@ -18,9 +19,25 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
     const userId = new mongoose.Types.ObjectId(token.userId);
-    const groups = await GroupUsers.aggregate(await groupAggregate({ userId }));
+    const groups = await GroupUsers.aggregate(await groupsAggregate({ userId }));
 
     res.status(200).send(groups);
+    return;
+  } catch (err: unknown) {
+    console.log(err);
+    res.status(500).send({ errors: 'an unknown error occured' });
+    return;
+  }
+});
+
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    const userId = new mongoose.Types.ObjectId(token.userId);
+    const groupId = new mongoose.Types.ObjectId(req.params.id);
+    const group = await GroupUsers.aggregate(await groupAggregate({ groupId, userId }));
+
+    res.status(200).send(group[0]);
     return;
   } catch (err: unknown) {
     console.log(err);

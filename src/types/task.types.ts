@@ -17,3 +17,24 @@ export interface IGroupTasksPostErrors {
   title: string[];
   status: string[];
 }
+
+export interface ITaskUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+export interface ITask {
+  title: string;
+  status: TaskStatus;
+  tags: string[];
+  users: ITaskUser[];
+  description?: string;
+  priority?: TaskPriority;
+  due?: Date;
+}
+
+export interface IEventSourceTask {
+  body: ITask[];
+  error?: unknown;
+}

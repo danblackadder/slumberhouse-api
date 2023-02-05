@@ -18,10 +18,10 @@ const schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export interface GroupUsersSchemaType {
+export interface GroupTasksSchemaType {
   role: GroupRole;
   groupId: mongoose.Types.ObjectId;
   taskId: mongoose.Types.ObjectId;
 }
 
-export default mongoose.model<GroupUsersSchemaType>('GroupTasks', schema);
+export default mongoose.model<GroupTasksSchemaType>('GroupTasks', schema);
