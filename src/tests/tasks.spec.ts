@@ -30,7 +30,7 @@ describe('/tasks', () => {
       const { id: groupId } = await createGroup({ userId, organizationId });
       await createTasks({ groupId, count: 2 });
 
-      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
       const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
       const response = await new Promise<IEventSourceTask>((resolve, reject) => {
@@ -56,7 +56,7 @@ describe('/tasks', () => {
       const { id: taskId } = await createTask({ groupId });
       const tags = await createTags({ groupId, taskId, count: 2 });
 
-      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
       const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
       const response = await new Promise<IEventSourceTask>((resolve, reject) => {
@@ -83,7 +83,7 @@ describe('/tasks', () => {
       const { id: taskId } = await createTask({ groupId });
       await createTaskUser({ userId, taskId });
 
-      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
       const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
       const response = await new Promise<IEventSourceTask>((resolve, reject) => {
@@ -321,7 +321,7 @@ describe('/tasks', () => {
       const { id: groupId } = await createGroup({ userId, organizationId });
       await createTasks({ groupId, count: 2 });
 
-      var eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
+      const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
       const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
 
       const responseSource = await new Promise<IEventSourceTask>((resolve, reject) => {

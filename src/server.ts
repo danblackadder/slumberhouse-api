@@ -4,8 +4,8 @@ import mongoSanitize from 'express-mongo-sanitize';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import http from 'http';
-import path from 'path';
 import { AddressInfo } from 'net';
+import path from 'path';
 
 import 'dotenv/config';
 
