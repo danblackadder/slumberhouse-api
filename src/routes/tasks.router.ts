@@ -2,9 +2,9 @@ import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 
 import { permissions } from '../middleware/permissions.middleware';
-import { GroupTags, Task, TaskTags, TaskUsers } from '../models';
+import { GroupTags, GroupUsers, Task, TaskTags, TaskUsers } from '../models';
 import GroupTasks from '../models/GroupTasks.model';
-import { taskAggregate } from '../utility/aggregates/task.aggregates';
+import { taskAggregate, taskUserAggregate } from '../utility/aggregates/task.aggregates';
 import { groupTaskPostValidation } from '../utility/validation/tasks.validation';
 
 const router = express.Router();
@@ -49,6 +49,36 @@ router.get('/:groupId/', permissions.groupUser, async (req: Request, res: Respon
       clients = clients.filter((client) => client.id !== clientId);
       res.end();
     });
+  } catch (err: unknown) {
+    console.log(err);
+    res.status(500).send({ errors: 'an unknown error occured' });
+    return;
+  }
+});
+
+router.get('/:groupId/tags', permissions.groupUser, async (req: Request, res: Response) => {
+  try {
+    const groupId = new mongoose.Types.ObjectId(req.params.groupId);
+    console.log(groupId);
+    const groupTags = await GroupTags.find({ groupId });
+    console.log(groupTags.map((tag) => tag.tag));
+
+    res.status(200).send(groupTags.map((tag) => tag.tag));
+  } catch (err: unknown) {
+    console.log(err);
+    res.status(500).send({ errors: 'an unknown error occured' });
+    return;
+  }
+});
+
+router.get('/:groupId/users', permissions.groupUser, async (req: Request, res: Response) => {
+  try {
+    const groupId = new mongoose.Types.ObjectId(req.params.groupId);
+    console.log(groupId);
+    const users = await GroupUsers.aggregate(await taskUserAggregate({ groupId }));
+    console.log(users);
+
+    res.status(200).send(users);
   } catch (err: unknown) {
     console.log(err);
     res.status(500).send({ errors: 'an unknown error occured' });

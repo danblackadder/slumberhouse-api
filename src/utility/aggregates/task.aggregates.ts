@@ -80,3 +80,35 @@ export const taskAggregate = async ({ groupId }: { groupId: mongoose.Types.Objec
 
   return aggregate;
 };
+
+export const taskUserAggregate = async ({ groupId }: { groupId: mongoose.Types.ObjectId }) => {
+  const aggregate = [] as PipelineStage[];
+  aggregate.push(
+    { $match: { groupId } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'users',
+      },
+    },
+    { $unwind: '$users' },
+    {
+      $project: {
+        _id: '$users._id',
+        firstName: '$users.firstName',
+        lastName: '$users.lastName',
+        email: '$users.email',
+      },
+    },
+    {
+      $sort: {
+        firstName: 1,
+        lastName: 1,
+      },
+    }
+  );
+
+  return aggregate;
+};

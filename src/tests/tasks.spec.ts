@@ -9,6 +9,7 @@ import server, { url } from '../server';
 import { IEventSourceTask, TaskPriority, TaskStatus } from '../types/task.types';
 import {
   createGroup,
+  createGroupUser,
   createOrganization,
   createTags,
   createTask,
@@ -19,6 +20,7 @@ import {
 } from '../utility/mock';
 
 import { database } from './config';
+import { GroupRole } from '../types/roles.types';
 
 describe('/tasks', () => {
   database('slumberhouse-test', server);
@@ -107,7 +109,7 @@ describe('/tasks', () => {
   describe('POST /:groupId', () => {
     it('creates a new task if user if user belongs to group', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -129,7 +131,7 @@ describe('/tasks', () => {
     });
 
     it('fails to create a task without a title', async () => {
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -162,7 +164,7 @@ describe('/tasks', () => {
 
     it('fails to create a new task if user does not belongs to group', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
 
       const { id: organizationId } = await createOrganization();
       const { id: userId } = await createUser({ organizationId });
@@ -181,7 +183,7 @@ describe('/tasks', () => {
 
     it('creates a new task with a description', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
       const description = faker.lorem.paragraph();
 
       const { id: organizationId } = await createOrganization();
@@ -201,7 +203,7 @@ describe('/tasks', () => {
 
     it('creates a new task with a priority', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
       const priority = TaskPriority.LOW;
 
       const { id: organizationId } = await createOrganization();
@@ -221,7 +223,7 @@ describe('/tasks', () => {
 
     it('creates a new task with a due date', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
       const due = new Date();
 
       const { id: organizationId } = await createOrganization();
@@ -241,7 +243,7 @@ describe('/tasks', () => {
 
     it('creates a new task with tags', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
       const tags = [faker.lorem.word(), faker.lorem.word()];
 
       const { id: organizationId } = await createOrganization();
@@ -269,7 +271,7 @@ describe('/tasks', () => {
 
     it('only creates reference to a single tag if a tag is duplicated', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
       const duplicatedTag = faker.lorem.word();
       const tags = [faker.lorem.word(), duplicatedTag, duplicatedTag];
 
@@ -292,7 +294,7 @@ describe('/tasks', () => {
 
     it('creates a new task with users', async () => {
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -314,7 +316,43 @@ describe('/tasks', () => {
     });
   });
 
-  describe('GET /:$groupId EventSource update', () => {
+  describe('GET /:groupId/tags', () => {
+    it('returns tags associated with a groupId', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+      const { id: groupId } = await createGroup({ userId, organizationId });
+      const { id: taskId } = await createTask({ groupId });
+      const tags = await createTags({ groupId, taskId, count: 2 });
+
+      const response = await request(server).get(`/tasks/${groupId}/tags`).set('Authorization', `Bearer ${token}`);
+
+      console.log(response.body);
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0]).toBe(tags[0].tag);
+      expect(response.body[1]).toBe(tags[1].tag);
+    });
+  });
+
+  describe.only('GET /:groupId/users', () => {
+    it.only('returns users associated with a groupId', async () => {
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+      const { id: groupId } = await createGroup({ userId, organizationId });
+      const users = await createUsers({ organizationId, count: 2 });
+
+      for (const user of users) {
+        await createGroupUser({ userId: user.id, groupId, role: GroupRole.BASIC });
+      }
+
+      const response = await request(server).get(`/tasks/${groupId}/users`).set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(3);
+    });
+  });
+
+  describe('GET /:groupId EventSource update', () => {
     it('returns updated tasks associated with group id on successful POST', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -338,7 +376,7 @@ describe('/tasks', () => {
       expect(responseSource.error).toBeUndefined();
 
       const title = faker.lorem.sentence();
-      const status = TaskStatus.DRAFT;
+      const status = TaskStatus.BACKLOG;
 
       const responsePost = await request(server)
         .post(`/tasks/${groupId}`)

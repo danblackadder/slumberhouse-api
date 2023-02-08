@@ -146,7 +146,7 @@ export const createGroupUser = async ({
 export const createTask = async ({ groupId }: { groupId: string }) => {
   const task = await Task.create({
     title: faker.lorem.sentence(),
-    status: TaskStatus.DRAFT,
+    status: TaskStatus.BACKLOG,
     description: faker.lorem.paragraph(),
     priority: TaskPriority.LOW,
     due: new Date(),
