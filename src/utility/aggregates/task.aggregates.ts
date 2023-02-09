@@ -46,8 +46,28 @@ export const taskAggregate = async ({ groupId }: { groupId: mongoose.Types.Objec
       },
     },
     {
+      $lookup: {
+        from: 'users',
+        localField: 'tasks.createdByUserId',
+        foreignField: '_id',
+        as: 'createdUser',
+      },
+    },
+    { $unwind: '$createdUser' },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'tasks.updatedByUserId',
+        foreignField: '_id',
+        as: 'updatedUser',
+      },
+    },
+    { $unwind: '$updatedUser' },
+    {
       $project: {
         _id: '$tasks._id',
+        createdAt: '$tasks.createdAt',
+        updatedAt: '$tasks.updatedAt',
         title: '$tasks.title',
         status: '$tasks.status',
         description: '$tasks.description',
@@ -73,6 +93,18 @@ export const taskAggregate = async ({ groupId }: { groupId: mongoose.Types.Objec
               email: '$$user.email',
             },
           },
+        },
+        createdBy: {
+          _id: '$createdUser._id',
+          firstName: '$createdUser.firstName',
+          lastName: '$createdUser.lastName',
+          email: '$createdUser.email',
+        },
+        updatedBy: {
+          _id: '$updatedUser._id',
+          firstName: '$updatedUser.firstName',
+          lastName: '$updatedUser.lastName',
+          email: '$updatedUser.email',
         },
       },
     }

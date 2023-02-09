@@ -88,6 +88,8 @@ router.get('/:groupId/users', permissions.groupUser, async (req: Request, res: R
 
 router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Response) => {
   try {
+    const { token } = req.body;
+    const userId = new mongoose.Types.ObjectId(token.userId);
     const groupId = new mongoose.Types.ObjectId(req.params.groupId);
     const { errors, title, description, priority, due, status, tags, users } = await groupTaskPostValidation({
       title: req.body.title,
@@ -118,7 +120,15 @@ router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Respo
       }
     }
 
-    const task = await Task.create({ title, description, priority, due, status });
+    const task = await Task.create({
+      title,
+      description,
+      priority,
+      due,
+      status,
+      createdByUserId: userId,
+      updatedByUserId: userId,
+    });
     await GroupTasks.create({ taskId: task._id, groupId });
 
     for (const _id of tagIds) {

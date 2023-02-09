@@ -46,7 +46,7 @@ try {
     const users = await createUsers({ organizationId, count: 50 });
     const groups = await createGroups({ userId, organizationId, count: 10 });
     for (const group of groups) {
-      const tasks = await createTasks({ groupId: group.id, count: randomNumber(10) });
+      const tasks = await createTasks({ groupId: group.id, userId, count: randomNumber(10) });
 
       for (const task of tasks) {
         await createTags({ groupId: group.id, taskId: task.id, count: randomNumber(3) });

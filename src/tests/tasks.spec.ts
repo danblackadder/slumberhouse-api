@@ -30,7 +30,7 @@ describe('/tasks', () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
       const { id: groupId } = await createGroup({ userId, organizationId });
-      await createTasks({ groupId, count: 2 });
+      await createTasks({ groupId, userId, count: 2 });
 
       const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
       const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
@@ -55,7 +55,7 @@ describe('/tasks', () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
       const { id: groupId } = await createGroup({ userId, organizationId });
-      const { id: taskId } = await createTask({ groupId });
+      const { id: taskId } = await createTask({ groupId, userId });
       const tags = await createTags({ groupId, taskId, count: 2 });
 
       const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
@@ -82,7 +82,7 @@ describe('/tasks', () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId, email } = await createUser({ organizationId });
       const { id: groupId } = await createGroup({ userId, organizationId });
-      const { id: taskId } = await createTask({ groupId });
+      const { id: taskId } = await createTask({ groupId, userId });
       await createTaskUser({ userId, taskId });
 
       const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
@@ -321,7 +321,7 @@ describe('/tasks', () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
       const { id: groupId } = await createGroup({ userId, organizationId });
-      const { id: taskId } = await createTask({ groupId });
+      const { id: taskId } = await createTask({ groupId, userId });
       const tags = await createTags({ groupId, taskId, count: 2 });
 
       const response = await request(server).get(`/tasks/${groupId}/tags`).set('Authorization', `Bearer ${token}`);
@@ -334,8 +334,8 @@ describe('/tasks', () => {
     });
   });
 
-  describe.only('GET /:groupId/users', () => {
-    it.only('returns users associated with a groupId', async () => {
+  describe('GET /:groupId/users', () => {
+    it('returns users associated with a groupId', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
       const { id: groupId } = await createGroup({ userId, organizationId });
@@ -352,12 +352,12 @@ describe('/tasks', () => {
     });
   });
 
-  describe('GET /:groupId EventSource update', () => {
+  describe.only('GET /:groupId EventSource update', () => {
     it('returns updated tasks associated with group id on successful POST', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
       const { id: groupId } = await createGroup({ userId, organizationId });
-      await createTasks({ groupId, count: 2 });
+      await createTasks({ groupId, userId, count: 2 });
 
       const eventSourceInitDict = { headers: { Cookie: `token=${token}` } };
       const source = new EventSource(`${url}/tasks/${groupId}`, eventSourceInitDict);
@@ -372,6 +372,7 @@ describe('/tasks', () => {
         };
       });
 
+      console.log(responseSource.body);
       expect(responseSource.body).toHaveLength(2);
       expect(responseSource.error).toBeUndefined();
 

@@ -143,13 +143,15 @@ export const createGroupUser = async ({
   return groupUser;
 };
 
-export const createTask = async ({ groupId }: { groupId: string }) => {
+export const createTask = async ({ groupId, userId }: { groupId: string; userId: string }) => {
   const task = await Task.create({
     title: faker.lorem.sentence(),
     status: TaskStatus.BACKLOG,
     description: faker.lorem.paragraph(),
     priority: TaskPriority.LOW,
     due: new Date(),
+    createdByUserId: userId,
+    updatedByUserId: userId,
   });
   await GroupTasks.create({ groupId, taskId: task._id });
 
@@ -158,10 +160,10 @@ export const createTask = async ({ groupId }: { groupId: string }) => {
   };
 };
 
-export const createTasks = async ({ groupId, count }: { groupId: string; count: number }) => {
+export const createTasks = async ({ groupId, userId, count }: { groupId: string; userId: string; count: number }) => {
   const tasks = [];
   for (let i = 0; i < count; i++) {
-    const task = await createTask({ groupId });
+    const task = await createTask({ groupId, userId });
     tasks.push({ id: task.id });
   }
 
