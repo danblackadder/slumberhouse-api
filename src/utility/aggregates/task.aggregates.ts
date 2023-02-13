@@ -73,6 +73,7 @@ export const taskAggregate = async ({ groupId }: { groupId: mongoose.Types.Objec
         description: '$tasks.description',
         priority: '$tasks.priority',
         due: '$tasks.due',
+        due_sort: { $cond: ['$tasks.due', 1, 0] },
         tags: {
           $reduce: {
             input: '$tags',
@@ -107,7 +108,14 @@ export const taskAggregate = async ({ groupId }: { groupId: mongoose.Types.Objec
           email: '$updatedUser.email',
         },
       },
-    }
+    },
+    {
+      $sort: {
+        due_sort: -1,
+        due: 1,
+      },
+    },
+    { $unset: 'due_sort' }
   );
 
   return aggregate;

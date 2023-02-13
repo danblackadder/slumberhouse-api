@@ -7,6 +7,7 @@ import { UserStatus } from '../types/user.types';
 import { randomNumber, shuffleArray } from '../utility';
 import {
   createGroups,
+  createGroupUser,
   createOrganization,
   createTags,
   createTasks,
@@ -53,6 +54,7 @@ try {
 
         const randomUsers = shuffleArray(users.map((user) => user.id)).slice(0, randomNumber(10));
         for (const userId of randomUsers) {
+          await createGroupUser({ userId, groupId: group.id });
           await createTaskUser({ taskId: task.id, userId });
         }
       }

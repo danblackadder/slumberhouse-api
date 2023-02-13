@@ -127,6 +127,7 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
           role: '$role',
           organizationId: '$organization._id',
           organization: '$organization.name',
+          image: '$user.image',
         },
       },
     ]);

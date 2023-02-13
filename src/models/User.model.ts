@@ -16,6 +16,9 @@ const schema = new mongoose.Schema(
     password: {
       type: String,
     },
+    image: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
@@ -25,6 +28,7 @@ export interface UserSchemaType {
   lastName: string;
   email: string;
   password: string;
+  image: string;
 }
 
 export default mongoose.model<UserSchemaType>('User', schema);

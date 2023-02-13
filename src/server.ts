@@ -12,7 +12,7 @@ import 'dotenv/config';
 
 import { permissions } from './middleware/permissions.middleware';
 import { verifyToken } from './middleware';
-import { Authentication, Group, Settings, Tasks } from './routes';
+import { Authentication, Group, Messages, Profile, Settings, Tasks } from './routes';
 
 const app = express();
 
@@ -33,8 +33,10 @@ app.use(
 );
 
 app.use('/authentication', Authentication);
+app.use('/profile', verifyToken, Profile);
 app.use('/groups', verifyToken, Group);
 app.use('/tasks', verifyToken, Tasks);
+app.use('/messages', verifyToken, Messages);
 app.use('/settings', [verifyToken, permissions.organizationAdmin], Settings);
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

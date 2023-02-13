@@ -6,6 +6,7 @@ import 'dotenv/config';
 
 import { GroupTags, GroupTasks, Task, TaskUsers } from '../models';
 import server, { url } from '../server';
+import { GroupRole } from '../types/roles.types';
 import { IEventSourceTask, TaskPriority, TaskStatus } from '../types/task.types';
 import {
   createGroup,
@@ -20,7 +21,6 @@ import {
 } from '../utility/mock';
 
 import { database } from './config';
-import { GroupRole } from '../types/roles.types';
 
 describe('/tasks', () => {
   database('slumberhouse-test', server);

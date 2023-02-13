@@ -1,4 +1,5 @@
 import Group from './Group.model';
+import GroupMessages from './GroupMessages.model';
 import GroupTags from './GroupTags.model';
 import GroupTasks from './GroupTasks.model';
 import GroupUsers from './GroupUsers.model';
@@ -12,6 +13,7 @@ import User from './User.model';
 
 export {
   Group,
+  GroupMessages,
   GroupTags,
   GroupTasks,
   GroupUsers,

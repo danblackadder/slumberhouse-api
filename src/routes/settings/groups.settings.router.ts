@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { UploadedFile } from 'express-fileupload';
+import mongoose from 'mongoose';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,6 +51,9 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   try {
+    const { token } = req.body;
+    const organizationId = new mongoose.Types.ObjectId(token.organizationId);
+
     const { errors, name, description, image, users } = await groupPostValidation({
       name: req.body.name,
       description: req.body.description,
@@ -62,17 +66,8 @@ router.post('/', async (req: Request, res: Response) => {
       return;
     }
 
-    let filename;
-    if (image) {
-      filename = `${uuidv4()}.${image?.name.split('.')[1]}`;
-      if (process.env.NODE_ENV !== 'test') {
-        image.mv(`${__dirname}/../../../uploads/${filename}`);
-      }
-    }
-    const fullUrl = `${req.protocol}://${req.get('host')}/uploads`;
-
     const organization = await OrganizationUsers.findOne({ userId: req.body.token.userId });
-    const group = await Group.create({ name, description, image: `${fullUrl}/${filename}` });
+    const group = await Group.create({ name, description });
 
     if (users) {
       for (const user of users) {
@@ -88,6 +83,33 @@ router.post('/', async (req: Request, res: Response) => {
       organizationId: organization?.organizationId,
       groupId: group?._id,
     });
+    const orgDir = `${__dirname}/../../../uploads/${organizationId}`;
+    if (!fs.existsSync(orgDir)) {
+      fs.mkdirSync(orgDir);
+    }
+
+    const groupsDir = `${orgDir}/groups`;
+    if (!fs.existsSync(groupsDir)) {
+      fs.mkdirSync(groupsDir);
+    }
+
+    const groupDir = `${groupsDir}/${group._id}`;
+    if (!fs.existsSync(groupDir)) {
+      fs.mkdirSync(groupDir);
+    }
+
+    const fullDir = `${groupDir}`;
+
+    let filename;
+    if (image) {
+      filename = `${uuidv4()}.${image?.name.split('.')[1]}`;
+      if (process.env.NODE_ENV !== 'test') {
+        image.mv(`${fullDir}/${filename}`);
+      }
+    }
+    const fullUrl = `${req.protocol}://${req.get('host')}/uploads`;
+
+    await Group.findByIdAndUpdate(group._id, { image: `${fullUrl}/${filename}` });
 
     res.status(200).send();
     return;
@@ -100,6 +122,9 @@ router.post('/', async (req: Request, res: Response) => {
 
 router.put('/:id', async (req: Request, res: Response) => {
   try {
+    const { token } = req.body;
+    const organizationId = new mongoose.Types.ObjectId(token.organizationId);
+
     const { errors, name, description, image, groupId } = await groupPutValidation({
       name: req.body.name,
       description: req.body.description,
@@ -114,9 +139,26 @@ router.put('/:id', async (req: Request, res: Response) => {
 
     const group = await Group.findById(groupId);
 
+    const orgDir = `${__dirname}/../../../uploads/${organizationId}`;
+    if (!fs.existsSync(orgDir)) {
+      fs.mkdirSync(orgDir);
+    }
+
+    const groupsDir = `${orgDir}/groups`;
+    if (!fs.existsSync(groupsDir)) {
+      fs.mkdirSync(groupsDir);
+    }
+
+    const groupDir = `${groupsDir}/${groupId}`;
+    if (!fs.existsSync(groupDir)) {
+      fs.mkdirSync(groupDir);
+    }
+
+    const fullDir = `${groupDir}`;
+
     if (image && group?.image) {
       if (group.image.includes('localhost'))
-        fs.unlink(`${__dirname}/../../../uploads/${group?.image.split('/')[4]}`, (err) => {
+        fs.unlink(`${fullDir}/${group?.image.split('/')[4]}`, (err) => {
           if (err) throw err;
         });
     }
@@ -125,10 +167,10 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (image) {
       filename = `${uuidv4()}.${image?.name.split('.')[1]}`;
       if (process.env.NODE_ENV !== 'test') {
-        image.mv(`${__dirname}/../../../uploads/${filename}`);
+        image.mv(`${fullDir}/${filename}`);
       }
     }
-    const fullUrl = `${req.protocol}://${req.get('host')}/uploads`;
+    const fullUrl = `${req.protocol}://${req.get('host')}/uploads/${organizationId}/groups/${groupId}`;
 
     await Group.findByIdAndUpdate(groupId, {
       name,
