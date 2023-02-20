@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Group, GroupUsers, OrganizationGroup, OrganizationUsers } from '../../models';
 import { IGetSettingsGroupFilter, IGetSettingsGroupSort } from '../../types/settings.types';
 import { groupSettingAggregate } from '../../utility/aggregates/settings/group.settings.aggregates';
-import { groupPostValidation, groupPutValidation } from '../../utility/validation/group.validation';
+import { groupPostValidation } from '../../utility/validation/group.validation';
 
 const router = express.Router();
 
@@ -110,73 +110,6 @@ router.post('/', async (req: Request, res: Response) => {
     const fullUrl = `${req.protocol}://${req.get('host')}/uploads/${organizationId}/groups/${group._id}`;
 
     await Group.findByIdAndUpdate(group._id, { image: `${fullUrl}/${filename}` });
-
-    res.status(200).send();
-    return;
-  } catch (err: unknown) {
-    console.log(err);
-    res.status(500).send({ errors: 'an unknown error occured' });
-    return;
-  }
-});
-
-router.put('/:id', async (req: Request, res: Response) => {
-  try {
-    const { token } = req.body;
-    const organizationId = new mongoose.Types.ObjectId(token.organizationId);
-
-    const { errors, name, description, image, groupId } = await groupPutValidation({
-      name: req.body.name,
-      description: req.body.description,
-      image: req.files?.image as UploadedFile,
-      groupId: req.params.id,
-    });
-
-    if (Object.values(errors).some((value: string[]) => value.length > 0)) {
-      res.status(400).send({ errors });
-      return;
-    }
-
-    const group = await Group.findById(groupId);
-
-    const orgDir = `${__dirname}/../../../uploads/${organizationId}`;
-    if (!fs.existsSync(orgDir)) {
-      fs.mkdirSync(orgDir);
-    }
-
-    const groupsDir = `${orgDir}/groups`;
-    if (!fs.existsSync(groupsDir)) {
-      fs.mkdirSync(groupsDir);
-    }
-
-    const groupDir = `${groupsDir}/${groupId}`;
-    if (!fs.existsSync(groupDir)) {
-      fs.mkdirSync(groupDir);
-    }
-
-    const fullDir = `${groupDir}`;
-
-    if (image && group?.image) {
-      if (group.image.includes('localhost'))
-        fs.unlink(`${fullDir}/${group?.image.split('/')[4]}`, (err) => {
-          if (err) throw err;
-        });
-    }
-
-    let filename;
-    if (image) {
-      filename = `${uuidv4()}.${image?.name.split('.')[1]}`;
-      if (process.env.NODE_ENV !== 'test') {
-        image.mv(`${fullDir}/${filename}`);
-      }
-    }
-    const fullUrl = `${req.protocol}://${req.get('host')}/uploads/${organizationId}/groups/${groupId}`;
-
-    await Group.findByIdAndUpdate(groupId, {
-      name,
-      description,
-      image: `${fullUrl}/${filename}`,
-    });
 
     res.status(200).send();
     return;

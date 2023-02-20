@@ -39,12 +39,30 @@ export const groupAggregate = async ({
       },
     },
     {
+      $lookup: {
+        from: 'groupwidgets',
+        localField: 'groupId',
+        foreignField: 'groupId',
+        as: 'widgets',
+      },
+    },
+    {
       $project: {
         _id: '$group._id',
         name: '$group.name',
         description: '$group.description',
         image: '$group.image',
         role: '$role',
+        widgets: {
+          $map: {
+            input: '$widgets',
+            as: 'widget',
+            in: {
+              _id: '$$widget._id',
+              widget: '$$widget.widget',
+            },
+          },
+        },
         users: {
           $map: {
             input: '$users',
@@ -79,6 +97,22 @@ export const groupsAggregate = async ({ userId }: { userId: mongoose.Types.Objec
     { $unwind: '$group' },
     {
       $lookup: {
+        from: 'groupwidgets',
+        localField: 'groupId',
+        foreignField: 'groupId',
+        as: 'groupwidgets',
+      },
+    },
+    {
+      $lookup: {
+        from: 'widgets',
+        localField: 'groupwidgets.widgetId',
+        foreignField: '_id',
+        as: 'widgets',
+      },
+    },
+    {
+      $lookup: {
         from: 'groupusers',
         localField: 'groupId',
         foreignField: 'groupId',
@@ -100,6 +134,16 @@ export const groupsAggregate = async ({ userId }: { userId: mongoose.Types.Objec
         description: '$group.description',
         image: '$group.image',
         role: '$role',
+        widgets: {
+          $map: {
+            input: '$widgets',
+            as: 'widget',
+            in: {
+              _id: '$$widget._id',
+              widget: '$$widget.widget',
+            },
+          },
+        },
         users: {
           $map: {
             input: '$users',

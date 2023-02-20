@@ -1,8 +1,11 @@
 import express, { Request, Response } from 'express';
+import { UploadedFile } from 'express-fileupload';
 import mongoose from 'mongoose';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { permissions } from '../middleware/permissions.middleware';
-import { GroupUsers, OrganizationUsers } from '../models';
+import { Group, GroupUsers, GroupWidgets, OrganizationUsers } from '../models';
 import { IGetGroupUserFilter, IGetGroupUserSort } from '../types/group.types';
 import { GroupRole } from '../types/roles.types';
 import {
@@ -11,7 +14,7 @@ import {
   groupUsersAggregate,
   groupUsersAvailableAggregate,
 } from '../utility/aggregates/group.aggregates';
-import { groupUserPutValidation } from '../utility/validation/group.validation';
+import { groupPutValidation, groupUserPutValidation } from '../utility/validation/group.validation';
 
 const router = express.Router();
 
@@ -38,6 +41,81 @@ router.get('/:id', async (req: Request, res: Response) => {
     const group = await GroupUsers.aggregate(await groupAggregate({ groupId, userId }));
 
     res.status(200).send(group[0]);
+    return;
+  } catch (err: unknown) {
+    console.log(err);
+    res.status(500).send({ errors: 'an unknown error occured' });
+    return;
+  }
+});
+
+router.put('/:id', permissions.groupAdmin, async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    const organizationId = new mongoose.Types.ObjectId(token.organizationId);
+
+    const { errors, name, description, image, widgets, groupId } = await groupPutValidation({
+      name: req.body.name,
+      description: req.body.description,
+      image: req.files?.image as UploadedFile,
+      widgets: req.body.widgets.split(','),
+      groupId: req.params.id,
+    });
+
+    if (Object.values(errors).some((value: string[]) => value.length > 0)) {
+      res.status(400).send({ errors });
+      return;
+    }
+
+    const group = await Group.findById(groupId);
+
+    await GroupWidgets.deleteMany({ groupId: group?._id });
+    if (widgets) {
+      for (const widgetId of widgets) {
+        await GroupWidgets.create({ groupId: group?._id, widgetId: widgetId });
+      }
+    }
+
+    const orgDir = `${__dirname}/../../uploads/${organizationId}`;
+    if (!fs.existsSync(orgDir)) {
+      fs.mkdirSync(orgDir);
+    }
+
+    const groupsDir = `${orgDir}/groups`;
+    if (!fs.existsSync(groupsDir)) {
+      fs.mkdirSync(groupsDir);
+    }
+
+    const groupDir = `${groupsDir}/${groupId}`;
+    if (!fs.existsSync(groupDir)) {
+      fs.mkdirSync(groupDir);
+    }
+
+    const fullDir = `${groupDir}`;
+
+    if (image && group?.image) {
+      if (group.image.includes('localhost'))
+        fs.unlink(`${fullDir}/${group?.image.split('/')[4]}`, (err) => {
+          if (err) throw err;
+        });
+    }
+
+    let filename;
+    if (image) {
+      filename = `${uuidv4()}.${image?.name.split('.')[1]}`;
+      if (process.env.NODE_ENV !== 'test') {
+        image.mv(`${fullDir}/${filename}`);
+      }
+    }
+    const fullUrl = `${req.protocol}://${req.get('host')}/uploads/${organizationId}/groups/${groupId}`;
+
+    await Group.findByIdAndUpdate(groupId, {
+      name,
+      description,
+      image: `${fullUrl}/${filename}`,
+    });
+
+    res.status(200).send();
     return;
   } catch (err: unknown) {
     console.log(err);

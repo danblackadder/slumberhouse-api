@@ -1,6 +1,5 @@
 import request from 'supertest';
 import { faker } from '@faker-js/faker';
-import jwt from 'jsonwebtoken';
 
 import 'dotenv/config';
 
@@ -358,41 +357,6 @@ describe('/authentication', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Username or password does not match');
-    });
-  });
-
-  describe('GET /me', () => {
-    it('returns users details when successfully aquired token', async () => {
-      const { id: organizationId } = await createOrganization();
-      const { token, email } = await createUser({ organizationId });
-
-      const response = await request(server).get('/authentication/me').set('Authorization', `Bearer ${token}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.email).toBe(email);
-    });
-
-    it('fails when no token has been provided', async () => {
-      const response = await request(server).get('/authentication/me');
-
-      expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Unauthorized request');
-    });
-
-    it('fails when token is not valid', async () => {
-      const response = await request(server).get('/authentication/me').set('Authorization', `Bearer fakeToken`);
-
-      expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Invalid token');
-    });
-
-    it('fails when no user is associated with token', async () => {
-      const token = jwt.sign({ id: '9543254' }, process.env.JWT_SECRET as string);
-      const response = await request(server).get('/authentication/me').set('Authorization', `Bearer ${token}`);
-
-      expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Invalid token');
     });
   });
 });

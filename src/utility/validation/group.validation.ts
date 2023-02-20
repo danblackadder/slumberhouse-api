@@ -60,11 +60,13 @@ export const groupPutValidation = async ({
   name,
   description,
   image,
+  widgets,
   groupId,
 }: {
   name?: string;
   description?: string;
   image?: UploadedFile;
+  widgets?: string[];
   groupId?: string;
 }) => {
   const errors = {
@@ -100,6 +102,7 @@ export const groupPutValidation = async ({
     name,
     description,
     image,
+    widgets,
     groupId,
   };
 };

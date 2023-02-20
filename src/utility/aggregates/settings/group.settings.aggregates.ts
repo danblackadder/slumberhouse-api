@@ -43,11 +43,20 @@ export const groupSettingAggregate = async ({
       },
     },
     {
+      $lookup: {
+        from: 'groupWidgets',
+        localField: 'groupId',
+        foreignField: 'groupId',
+        as: 'widgets',
+      },
+    },
+    {
       $project: {
         _id: '$group._id',
         name: '$group.name',
         description: '$group.description',
         image: '$group.image',
+        widgets: { $size: 'widgets' },
         users: { $size: '$users' },
       },
     }

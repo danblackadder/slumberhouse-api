@@ -11,7 +11,7 @@ import { database } from './config';
 describe('/profile', () => {
   database('slumberhouse-test', server);
 
-  describe('GET /me', () => {
+  describe('GET /', () => {
     it('returns users details when successfully aquired token', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, email } = await createUser({ organizationId });
