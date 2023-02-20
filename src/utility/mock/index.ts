@@ -7,6 +7,7 @@ import {
   Group,
   GroupTags,
   GroupUsers,
+  GroupWidgets,
   Organization,
   OrganizationGroup,
   OrganizationUsers,
@@ -14,6 +15,7 @@ import {
   TaskTags,
   TaskUsers,
   User,
+  Widgets,
 } from '../../models';
 import GroupTasks from '../../models/GroupTasks.model';
 import { GroupRole, OrganizationRole } from '../../types/roles.types';
@@ -187,5 +189,17 @@ export const createTaskUser = async ({ userId, taskId }: { userId: string; taskI
 
   return {
     id: taskUser._id.toString(),
+  };
+};
+
+export const createGroupWidgets = async ({ groupId }: { groupId: string }) => {
+  const widgets = await Widgets.find({});
+
+  for (const widget of widgets) {
+    await GroupWidgets.create({ groupId, widgetId: widget._id });
+  }
+
+  return {
+    widgets,
   };
 };

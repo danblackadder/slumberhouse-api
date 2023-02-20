@@ -6,10 +6,65 @@ import { v4 as uuidv4 } from 'uuid';
 
 import 'dotenv/config';
 
-import { User } from '../models';
+import { OrganizationUsers, User } from '../models';
 import { profilePutValidation } from '../utility/validation/profile.validation';
 
 const router = express.Router();
+
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    const id = new mongoose.Types.ObjectId(token.userId);
+
+    const user = await OrganizationUsers.aggregate([
+      { $match: { userId: id } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: 'organizationId',
+          foreignField: '_id',
+          as: 'organization',
+        },
+      },
+      { $unwind: '$organization' },
+      {
+        $lookup: {
+          from: 'groupusers',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'usergroups',
+        },
+      },
+      {
+        $project: {
+          _id: '$user._id',
+          firstName: '$user.firstName',
+          lastName: '$user.lastName',
+          email: '$user.email',
+          role: '$role',
+          organizationId: '$organization._id',
+          organization: '$organization.name',
+          image: '$user.image',
+        },
+      },
+    ]);
+
+    res.status(200).send(user[0]);
+    return;
+  } catch (err: unknown) {
+    res.status(400).send({ errors: 'an unknown error occured' });
+    return;
+  }
+});
 
 router.put('/:id', async (req: Request, res: Response) => {
   try {

@@ -8,6 +8,7 @@ import { randomNumber, shuffleArray } from '../utility';
 import {
   createGroups,
   createGroupUser,
+  createGroupWidgets,
   createOrganization,
   createTags,
   createTasks,
@@ -47,6 +48,7 @@ try {
     const users = await createUsers({ organizationId, count: 50 });
     const groups = await createGroups({ userId, organizationId, count: 10 });
     for (const group of groups) {
+      await createGroupWidgets({ groupId: group.id });
       const tasks = await createTasks({ groupId: group.id, userId, count: randomNumber(10) });
 
       for (const task of tasks) {

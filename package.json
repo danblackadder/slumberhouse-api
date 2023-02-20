@@ -7,7 +7,7 @@
     "start": "nodemon src/index.ts",
     "test": "jest --coverage --detectOpenHandles",
     "test:debug": "jest --detectOpenHandles -i tasks.spec.ts --watch",
-    "mock": "ts-node ./src/scripts/mock.ts",
+    "mock": "ts-node ./src/scripts/widgets.ts && ts-node ./src/scripts/mock.ts",
     "lint": "eslint src --ext .tsx --ext .ts && tsc && prettier src --check",
     "lint:fix": "eslint src --ext .tsx --ext .ts --fix && tsc && prettier src --write"
   },

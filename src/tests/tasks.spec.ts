@@ -110,6 +110,7 @@ describe('/tasks', () => {
     it('creates a new task if user if user belongs to group', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -117,7 +118,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status })
+        .send({ title, status, priority })
         .set('Authorization', `Bearer ${token}`);
 
       const task = await Task.findOne({});
@@ -132,6 +133,7 @@ describe('/tasks', () => {
 
     it('fails to create a task without a title', async () => {
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -139,7 +141,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ status })
+        .send({ status, priority })
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
@@ -148,6 +150,7 @@ describe('/tasks', () => {
 
     it('fails to create a task without a status', async () => {
       const title = faker.lorem.sentence();
+      const priority = TaskPriority.LOW;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -155,16 +158,34 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title })
+        .send({ title, priority })
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(400);
       expect(response.body.errors.status).toContain('Status must be provided');
     });
 
+    it('fails to create a task without a priority', async () => {
+      const title = faker.lorem.sentence();
+      const status = TaskStatus.BACKLOG;
+
+      const { id: organizationId } = await createOrganization();
+      const { token, id: userId } = await createUser({ organizationId });
+      const { id: groupId } = await createGroup({ userId, organizationId });
+
+      const response = await request(server)
+        .post(`/tasks/${groupId}`)
+        .send({ title, status })
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors.priority).toContain('Priority must be provided');
+    });
+
     it('fails to create a new task if user does not belongs to group', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
 
       const { id: organizationId } = await createOrganization();
       const { id: userId } = await createUser({ organizationId });
@@ -174,7 +195,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status })
+        .send({ title, status, priority })
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(401);
@@ -184,6 +205,7 @@ describe('/tasks', () => {
     it('creates a new task with a description', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
       const description = faker.lorem.paragraph();
 
       const { id: organizationId } = await createOrganization();
@@ -192,7 +214,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status, description })
+        .send({ title, status, priority, description })
         .set('Authorization', `Bearer ${token}`);
 
       const task = await Task.findOne({});
@@ -201,29 +223,10 @@ describe('/tasks', () => {
       expect(task?.description).toBe(description);
     });
 
-    it('creates a new task with a priority', async () => {
-      const title = faker.lorem.sentence();
-      const status = TaskStatus.BACKLOG;
-      const priority = TaskPriority.LOW;
-
-      const { id: organizationId } = await createOrganization();
-      const { token, id: userId } = await createUser({ organizationId });
-      const { id: groupId } = await createGroup({ userId, organizationId });
-
-      const response = await request(server)
-        .post(`/tasks/${groupId}`)
-        .send({ title, status, priority })
-        .set('Authorization', `Bearer ${token}`);
-
-      const task = await Task.findOne({});
-
-      expect(response.status).toBe(200);
-      expect(task?.priority).toBe(priority);
-    });
-
     it('creates a new task with a due date', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
       const due = new Date();
 
       const { id: organizationId } = await createOrganization();
@@ -232,7 +235,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status, due })
+        .send({ title, status, priority, due })
         .set('Authorization', `Bearer ${token}`);
 
       const task = await Task.findOne({});
@@ -244,6 +247,7 @@ describe('/tasks', () => {
     it('creates a new task with tags', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
       const tags = [faker.lorem.word(), faker.lorem.word()];
 
       const { id: organizationId } = await createOrganization();
@@ -252,7 +256,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status, tags })
+        .send({ title, status, priority, tags })
         .set('Authorization', `Bearer ${token}`);
 
       const groupTags = [] as string[];
@@ -272,6 +276,7 @@ describe('/tasks', () => {
     it('only creates reference to a single tag if a tag is duplicated', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
       const duplicatedTag = faker.lorem.word();
       const tags = [faker.lorem.word(), duplicatedTag, duplicatedTag];
 
@@ -281,7 +286,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status, tags })
+        .send({ title, status, priority, tags })
         .set('Authorization', `Bearer ${token}`);
 
       const groupTags = await GroupTags.find({ groupId });
@@ -295,6 +300,7 @@ describe('/tasks', () => {
     it('creates a new task with users', async () => {
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
 
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -303,7 +309,7 @@ describe('/tasks', () => {
 
       const response = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status, users: users.map((user) => user.id) })
+        .send({ title, status, priority, users: users.map((user) => user.id) })
         .set('Authorization', `Bearer ${token}`);
 
       const groupTask = await GroupTasks.findOne({ groupId });
@@ -326,7 +332,6 @@ describe('/tasks', () => {
 
       const response = await request(server).get(`/tasks/${groupId}/tags`).set('Authorization', `Bearer ${token}`);
 
-      console.log(response.body);
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(2);
       expect(response.body[0]).toBe(tags[0].tag);
@@ -352,7 +357,7 @@ describe('/tasks', () => {
     });
   });
 
-  describe.only('GET /:groupId EventSource update', () => {
+  describe('GET /:groupId EventSource update', () => {
     it('returns updated tasks associated with group id on successful POST', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
@@ -372,31 +377,32 @@ describe('/tasks', () => {
         };
       });
 
-      console.log(responseSource.body);
       expect(responseSource.body).toHaveLength(2);
       expect(responseSource.error).toBeUndefined();
 
       const title = faker.lorem.sentence();
       const status = TaskStatus.BACKLOG;
+      const priority = TaskPriority.LOW;
 
       const responsePost = await request(server)
         .post(`/tasks/${groupId}`)
-        .send({ title, status })
+        .send({ title, status, priority })
         .set('Authorization', `Bearer ${token}`);
+
+      expect(responsePost.status).toBe(200);
 
       const responseSourcePost = await new Promise<IEventSourceTask>((resolve, reject) => {
         source.onmessage = (e) => {
-          source.close();
           resolve({ body: JSON.parse(e.data) });
+          source.close();
         };
 
         source.onerror = function (err) {
-          source.close();
           reject({ error: err });
+          source.close();
         };
       });
 
-      expect(responsePost.status).toBe(200);
       expect(responseSourcePost.body).toHaveLength(3);
       expect(responseSourcePost.error).toBeUndefined();
     });

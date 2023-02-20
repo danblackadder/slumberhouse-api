@@ -27,6 +27,14 @@ export const groupAggregate = async ({
         from: 'groupusers',
         localField: 'groupId',
         foreignField: 'groupId',
+        as: 'groupusers',
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'groupusers.userId',
+        foreignField: '_id',
         as: 'users',
       },
     },
@@ -37,7 +45,18 @@ export const groupAggregate = async ({
         description: '$group.description',
         image: '$group.image',
         role: '$role',
-        users: { $size: '$users' },
+        users: {
+          $map: {
+            input: '$users',
+            as: 'user',
+            in: {
+              _id: '$$user._id',
+              firstName: '$$user.firstName',
+              lastName: '$$user.lastName',
+              email: '$$user.email',
+            },
+          },
+        },
       },
     }
   );
@@ -63,6 +82,14 @@ export const groupsAggregate = async ({ userId }: { userId: mongoose.Types.Objec
         from: 'groupusers',
         localField: 'groupId',
         foreignField: 'groupId',
+        as: 'groupusers',
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'groupusers.userId',
+        foreignField: '_id',
         as: 'users',
       },
     },
@@ -73,7 +100,18 @@ export const groupsAggregate = async ({ userId }: { userId: mongoose.Types.Objec
         description: '$group.description',
         image: '$group.image',
         role: '$role',
-        users: { $size: '$users' },
+        users: {
+          $map: {
+            input: '$users',
+            as: 'user',
+            in: {
+              _id: '$$user._id',
+              firstName: '$$user.firstName',
+              lastName: '$$user.lastName',
+              email: '$$user.email',
+            },
+          },
+        },
       },
     }
   );

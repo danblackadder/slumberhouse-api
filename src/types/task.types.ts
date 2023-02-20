@@ -15,6 +15,7 @@ export enum TaskPriority {
 export interface IGroupTasksPostErrors {
   title: string[];
   status: string[];
+  priority: string[];
 }
 
 export interface ITaskUser {

@@ -107,7 +107,7 @@ router.post('/', async (req: Request, res: Response) => {
         image.mv(`${fullDir}/${filename}`);
       }
     }
-    const fullUrl = `${req.protocol}://${req.get('host')}/uploads`;
+    const fullUrl = `${req.protocol}://${req.get('host')}/uploads/${organizationId}/groups/${group._id}`;
 
     await Group.findByIdAndUpdate(group._id, { image: `${fullUrl}/${filename}` });
 

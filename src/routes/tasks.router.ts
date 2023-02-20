@@ -54,9 +54,7 @@ router.get('/:groupId/', permissions.groupUser, async (req: Request, res: Respon
 router.get('/:groupId/tags', permissions.groupUser, async (req: Request, res: Response) => {
   try {
     const groupId = new mongoose.Types.ObjectId(req.params.groupId);
-    console.log(groupId);
     const groupTags = await GroupTags.find({ groupId });
-    console.log(groupTags.map((tag) => tag.tag));
 
     res.status(200).send(groupTags.map((tag) => tag.tag));
   } catch (err: unknown) {
@@ -69,9 +67,7 @@ router.get('/:groupId/tags', permissions.groupUser, async (req: Request, res: Re
 router.get('/:groupId/users', permissions.groupUser, async (req: Request, res: Response) => {
   try {
     const groupId = new mongoose.Types.ObjectId(req.params.groupId);
-    console.log(groupId);
     const users = await GroupUsers.aggregate(await taskUserAggregate({ groupId }));
-    console.log(users);
 
     res.status(200).send(users);
   } catch (err: unknown) {
@@ -103,13 +99,15 @@ router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Respo
 
     const tagIds = [] as mongoose.Types.ObjectId[];
 
-    for (const tag of tags) {
-      const tagExists = await GroupTags.findOne({ tag, groupId });
-      if (!tagExists) {
-        const newTag = await GroupTags.create({ tag, groupId });
-        tagIds.push(newTag._id);
-      } else {
-        tagIds.push(tagExists._id);
+    if (tags) {
+      for (const tag of tags) {
+        const tagExists = await GroupTags.findOne({ tag, groupId });
+        if (!tagExists) {
+          const newTag = await GroupTags.create({ tag, groupId });
+          tagIds.push(newTag._id);
+        } else {
+          tagIds.push(tagExists._id);
+        }
       }
     }
 
@@ -124,12 +122,16 @@ router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Respo
     });
     await GroupTasks.create({ taskId: task._id, groupId });
 
-    for (const _id of tagIds) {
-      await TaskTags.create({ taskId: task._id, tagId: _id });
+    if (tagIds) {
+      for (const _id of tagIds) {
+        await TaskTags.create({ taskId: task._id, tagId: _id });
+      }
     }
 
-    for (const userId of users) {
-      await TaskUsers.create({ taskId: task._id, userId });
+    if (users) {
+      for (const userId of users) {
+        await TaskUsers.create({ taskId: task._id, userId });
+      }
     }
 
     updateAllActiveClients({ groupId });
@@ -138,58 +140,6 @@ router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Respo
   } catch (err: unknown) {
     if (err instanceof Error && err.name === 'CastError') {
       res.status(400).send({ errors: 'Group id must be a valid id' });
-      return;
-    }
-
-    console.log(err);
-    res.status(500).send({ errors: 'an unknown error occured' });
-    return;
-  }
-});
-
-router.put('/:groupId/:taskId/lock/title', async (req: Request, res: Response) => {
-  try {
-    const { token } = req.body;
-    const userId = new mongoose.Types.ObjectId(token.userId);
-    const groupId = new mongoose.Types.ObjectId(req.params.groupId);
-    const taskId = new mongoose.Types.ObjectId(req.params.taskId);
-
-    await Task.findByIdAndUpdate(taskId, {
-      titleLockedUserId: userId,
-    });
-
-    updateAllActiveClients({ groupId });
-    res.status(200).send();
-    return;
-  } catch (err: unknown) {
-    if (err instanceof Error && err.name === 'CastError') {
-      res.status(400).send({ errors: 'Group id and Task id must be a valid id' });
-      return;
-    }
-
-    console.log(err);
-    res.status(500).send({ errors: 'an unknown error occured' });
-    return;
-  }
-});
-
-router.put('/:groupId/:taskId/lock/description', async (req: Request, res: Response) => {
-  try {
-    const { token } = req.body;
-    const userId = new mongoose.Types.ObjectId(token.userId);
-    const groupId = new mongoose.Types.ObjectId(req.params.groupId);
-    const taskId = new mongoose.Types.ObjectId(req.params.taskId);
-
-    await Task.findByIdAndUpdate(taskId, {
-      descriptionLockedUserId: userId,
-    });
-
-    updateAllActiveClients({ groupId });
-    res.status(200).send();
-    return;
-  } catch (err: unknown) {
-    if (err instanceof Error && err.name === 'CastError') {
-      res.status(400).send({ errors: 'Group id and Task id must be a valid id' });
       return;
     }
 
@@ -246,14 +196,18 @@ router.put('/:groupId/:taskId', async (req: Request, res: Response) => {
     });
 
     await TaskTags.deleteMany({ taskId: task?._id });
-    for (const _id of tagIds) {
-      await TaskTags.create({ taskId: task?._id, tagId: _id });
+    if (tagIds) {
+      for (const _id of tagIds) {
+        await TaskTags.create({ taskId: task?._id, tagId: _id });
+      }
     }
 
     await TaskUsers.deleteMany({ taskId: task?._id });
-    for (const userId of users) {
-      if (!(await TaskUsers.findOne({ taskId: task?._id, userId }))) {
-        await TaskUsers.create({ taskId: task?._id, userId });
+    if (users) {
+      for (const userId of users) {
+        if (!(await TaskUsers.findOne({ taskId: task?._id, userId }))) {
+          await TaskUsers.create({ taskId: task?._id, userId });
+        }
       }
     }
 

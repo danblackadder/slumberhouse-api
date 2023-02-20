@@ -17,7 +17,6 @@ const updateAllActiveClients = async ({ groupId }: { groupId: mongoose.Types.Obj
       const messages = await GroupMessages.aggregate(
         await messageAggregate({ groupId: client.groupId, limit: 20, currentPage: 1 })
       );
-      console.log(messages);
       client.response.write(`data: ${JSON.stringify(messages)} \n\n`);
     }
   }
@@ -67,7 +66,6 @@ router.post('/:groupId/', permissions.groupUser, async (req: Request, res: Respo
       return;
     }
 
-    console.log(message);
     await GroupMessages.create({ message, userId, groupId });
 
     updateAllActiveClients({ groupId });

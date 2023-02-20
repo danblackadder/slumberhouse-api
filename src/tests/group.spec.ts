@@ -32,7 +32,7 @@ describe('/group', () => {
       expect(response.body).toHaveLength(2);
     });
 
-    it('returns a count of users associated with group', async () => {
+    it('returns users associated with group', async () => {
       const { id: organizationId } = await createOrganization();
       const { token, id: userId } = await createUser({ organizationId });
       const { id: newUserId } = await createUser({ organizationId, role: OrganizationRole.BASIC });
@@ -43,7 +43,8 @@ describe('/group', () => {
       const response = await request(server).get('/groups/').set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body[0].users).toBe(2);
+      expect(response.body[0].users).toHaveLength(2);
+      expect(response.body[0].users[0]._id.toString()).toBe(userId);
     });
   });
 

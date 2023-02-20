@@ -20,6 +20,7 @@ export const groupTaskPostValidation = async ({
   const errors = {
     title: [],
     status: [],
+    priority: [],
   } as IGroupTasksPostErrors;
 
   if (!title) {
@@ -31,7 +32,7 @@ export const groupTaskPostValidation = async ({
   }
 
   if (!priority) {
-    errors.status.push('Priority must be provided');
+    errors.priority.push('Priority must be provided');
   }
 
   return {
@@ -66,6 +67,7 @@ export const groupTaskPutValidation = async ({
   const errors = {
     title: [],
     status: [],
+    priority: [],
   } as IGroupTasksPostErrors;
 
   if (!title) {
@@ -77,7 +79,7 @@ export const groupTaskPutValidation = async ({
   }
 
   if (!priority) {
-    errors.status.push('Priority must be provided');
+    errors.priority.push('Priority must be provided');
   }
 
   return {

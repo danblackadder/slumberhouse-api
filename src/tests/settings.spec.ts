@@ -824,12 +824,12 @@ describe('/settings', () => {
           })
           .set('Authorization', `Bearer ${token}`);
 
-        const group = await Group.findOne({ name });
+        const group = await Group.findOne({ name: name.toLowerCase() });
 
         expect(response.status).toBe(200);
         expect(response.body.errors).toBeUndefined();
         expect(group).not.toBe(null);
-        expect(group?.name).toBe(name);
+        expect(group?.name).toBe(name.toLowerCase());
       });
 
       it('successfully creates a new group with a name if user is organization admin', async () => {
@@ -844,12 +844,12 @@ describe('/settings', () => {
           })
           .set('Authorization', `Bearer ${token}`);
 
-        const group = await Group.findOne({ name });
+        const group = await Group.findOne({ name: name.toLowerCase() });
 
         expect(response.status).toBe(200);
         expect(response.body.errors).toBeUndefined();
         expect(group).not.toBe(null);
-        expect(group?.name).toBe(name);
+        expect(group?.name).toBe(name.toLowerCase());
       });
 
       it('fails if user is not organization owner or admin', async () => {
@@ -883,7 +883,7 @@ describe('/settings', () => {
           })
           .set('Authorization', `Bearer ${token}`);
 
-        const group = await Group.findOne({ name });
+        const group = await Group.findOne({ name: name.toLowerCase() });
 
         expect(response.status).toBe(200);
         expect(response.body.error).toBeUndefined();
@@ -904,7 +904,7 @@ describe('/settings', () => {
           .field('name', name)
           .attach('image', image);
 
-        const group = await Group.findOne({ name });
+        const group = await Group.findOne({ name: name.toLowerCase() });
 
         expect(response.status).toBe(200);
         expect(response.body.error).toBeUndefined();
@@ -932,7 +932,7 @@ describe('/settings', () => {
           })
           .set('Authorization', `Bearer ${token}`);
 
-        const group = await Group.findOne({ name });
+        const group = await Group.findOne({ name: name.toLowerCase() });
 
         expect(response.status).toBe(200);
         expect(response.body.error).toBeUndefined();
